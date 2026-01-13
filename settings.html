@@ -2,32 +2,27 @@
 <html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="style.css">
-<title>R Prints</title>
-</head>
+<title>R Prints</title></head>
 <body>
 <div class="layout">
 <aside class="sidebar">
- <div class="logo">
-  <div class="logo-box">R</div>
-  <div>R PRINTS</div>
- </div>
+ <div class="logo"><div class="logo-box">R</div><div>R PRINTS</div></div>
  <nav class="nav">
-  <a href="index.html" class=>Home</a>
-  <a href="calculator.html" class=>Calculator</a>
-  <a href="settings.html" class=active>Settings</a>
-  <a href="quote.html" class=>Quote</a>
-  <a href="stl.html" class=>Upload STL</a>
+  <a href="index.html">Home</a>
+  <a href="calculator.html">Calculator</a>
+  <a href="settings.html">Settings</a>
+  <a href="quote.html">Quote</a>
+  <a href="stl.html">Upload STL</a>
  </nav>
 </aside>
-<main class="main">
-<section class="card">
+<main class="main"><section class="card">
 
 <h2>Settings</h2>
 <label>Filament £/kg</label><input id=price>
 <label>£ per gram</label><input id=rg>
 <label>£ per hour</label><input id=rh>
 <label>Base fee £</label><input id=base>
-<button onclick=save()>Save</button>
+<button onclick="save()">Save</button>
 <script>
 const price=document.getElementById("price");
 const rg=document.getElementById("rg");
@@ -43,7 +38,6 @@ function save(){
 }
 </script>
 
-</section>
-</main>
+</section></main>
 </div>
 </body></html>
