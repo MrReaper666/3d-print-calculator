@@ -2,8 +2,6 @@
 <html><head><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="style.css">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8403529307662804"
-     crossorigin="anonymous"></script>
 <title>R Prints</title></head>
 <body>
 <div class="layout">
@@ -20,25 +18,28 @@
 <main class="main"><section class="card">
 
 <h2>Calculator</h2>
-<label>Filament £/kg</label><input id=price>
+<label>Filament price</label><input id=price>
 <label>Grams</label><input id=g>
 <div class=grid>
  <div><label>Hours</label><input id=h></div>
  <div><label>Minutes</label><input id=m></div>
 </div>
-<label>Extra £</label><input id=e>
+<label>Extra</label><input id=e>
 <button onclick="calc()">Calculate</button>
 <div class=result id=out></div>
+
 <script>
 const set=JSON.parse(localStorage.getItem("settings")||"{}");
+const cur=set.currency||"£";
 price.value=set.price||20;
+
 function calc(){
  const gVal=+g.value||0,hVal=+h.value||0,mVal=+m.value||0,eVal=+e.value||0;
  const time=hVal+(mVal/60);
  const cost=(gVal/1000)*(price.value||20)+eVal;
  const sell=(gVal*(set.rateG||0.08))+(time*(set.rateH||2.5))+(set.base||2);
  localStorage.setItem("quote",JSON.stringify({g:gVal,time,sell}));
- out.innerHTML="Cost: £"+cost.toFixed(2)+"<br><span class=good>Sell: £"+sell.toFixed(2)+"</span>";
+ out.innerHTML="Cost: "+cur+cost.toFixed(2)+"<br><span class=good>Sell: "+cur+sell.toFixed(2)+"</span>";
 }
 </script>
 
