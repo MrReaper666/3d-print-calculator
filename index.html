@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>R PRINTS – Calculator</title>
+<style>
+body{font-family:Arial;background:#0b0b0b;color:#fff;margin:0;padding:20px}
+.card{max-width:600px;margin:auto;background:#141414;padding:20px;border-radius:12px}
+label{display:block;margin-top:12px}
+input{width:100%;padding:10px;margin-top:6px;background:#222;color:#fff;border:1px solid #333;border-radius:8px}
+button{margin-top:16px;width:100%;padding:12px;background:#00bcd4;border:none;border-radius:10px;font-weight:700}
+.result{margin-top:16px;background:#1c1c1c;padding:14px;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>3D Print Calculator</h2>
+
+<label>Filament £/kg</label>
+<input id="price" value="20">
+
+<label>Grams used</label>
+<input id="grams" value="50">
+
+<label>Hours</label>
+<input id="hours" value="3">
+
+<label>Minutes</label>
+<input id="minutes" value="0">
+
+<label>Extra £</label>
+<input id="extra" value="0">
+
+<button onclick="calc()">Calculate</button>
+
+<div class="result" id="out"></div>
+</div>
+
+<script>
+function calc(){
+ const price=+priceInput.value;
+}
+</script>
+
+<script>
+const priceInput=document.getElementById("price");
+const grams=document.getElementById("grams");
+const hours=document.getElementById("hours");
+const minutes=document.getElementById("minutes");
+const extra=document.getElementById("extra");
+const out=document.getElementById("out");
+
+function calc(){
+ const time=(+hours.value)+(+minutes.value/60);
+ const cost=(+grams.value/1000)*(+priceInput.value)+(+extra.value);
+ const sell=(+grams.value*0.08)+(time*2.5)+2;
+ out.innerHTML=
+  "Cost: £"+cost.toFixed(2)+"<br>"+
+  "Sell: £"+sell.toFixed(2)+"<br>"+
+  "Profit: £"+(sell-cost).toFixed(2);
+}
+</script>
+</body>
+</html>
