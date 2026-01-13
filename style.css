@@ -1,0 +1,65 @@
+
+:root{
+ --bg:#0b0b0b;
+ --panel:#141414;
+ --panel2:#1e1e1e;
+ --accent:#00bcd4;
+ --text:#ffffff;
+ --muted:#aaaaaa;
+ --border:#2a2a2a;
+ --good:#4caf50;
+}
+body{
+ margin:0;
+ font-family:Segoe UI,Arial,sans-serif;
+ background:var(--bg);
+ color:var(--text);
+}
+.card{
+ max-width:650px;
+ margin:40px auto;
+ background:var(--panel);
+ padding:24px;
+ border-radius:14px;
+ border:1px solid var(--border);
+}
+h1,h2{margin-top:0}
+label{display:block;margin-top:14px;font-size:14px}
+input{
+ width:100%;
+ padding:12px;
+ margin-top:6px;
+ background:#222;
+ color:var(--text);
+ border:1px solid var(--border);
+ border-radius:10px;
+}
+button,a.btn{
+ display:block;
+ width:100%;
+ margin-top:18px;
+ padding:14px;
+ background:var(--accent);
+ color:#000;
+ border:none;
+ border-radius:12px;
+ font-weight:700;
+ text-align:center;
+ text-decoration:none;
+ cursor:pointer;
+}
+a.link{
+ display:block;
+ margin-top:14px;
+ text-align:center;
+ color:var(--accent);
+ text-decoration:none;
+}
+.result{
+ margin-top:18px;
+ background:var(--panel2);
+ padding:16px;
+ border-radius:12px;
+}
+.good{color:var(--good);font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
