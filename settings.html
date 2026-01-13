@@ -18,29 +18,19 @@
 <main class="main"><section class="card">
 
 <h2>Settings</h2>
-<label>Currency</label>
-<select id="currency">
- <option value="£">£ GBP</option>
- <option value="$">$ USD</option>
- <option value="€">€ EUR</option>
-</select>
-
-<label>Filament price</label><input id=price>
-<label>Rate per gram</label><input id=rg>
-<label>Rate per hour</label><input id=rh>
-<label>Base fee</label><input id=base>
-
+<label>Filament price (£/kg)</label><input id=price>
+<label>£ per gram</label><input id=rg>
+<label>£ per hour</label><input id=rh>
+<label>Base fee (£)</label><input id=base>
 <button onclick="save()">Save</button>
 
 <script>
-const currency=document.getElementById("currency");
 const price=document.getElementById("price");
 const rg=document.getElementById("rg");
 const rh=document.getElementById("rh");
 const base=document.getElementById("base");
 
 const s=JSON.parse(localStorage.getItem("settings")||"{}");
-currency.value=s.currency||"£";
 price.value=s.price||20;
 rg.value=s.rateG||0.08;
 rh.value=s.rateH||2.5;
@@ -48,7 +38,6 @@ base.value=s.base||2;
 
 function save(){
  localStorage.setItem("settings",JSON.stringify({
-  currency:currency.value,
   price:+price.value,
   rateG:+rg.value,
   rateH:+rh.value,

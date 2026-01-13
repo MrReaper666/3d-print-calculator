@@ -16,7 +16,7 @@ body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:v
 .card{width:100%;max-width:760px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;box-shadow:0 0 40px rgba(0,0,0,.7)}
 h1,h2{margin-top:0}
 label{display:block;margin-top:14px}
-input,select{width:100%;padding:12px;margin-top:6px;background:#222;color:#fff;border:1px solid var(--border);border-radius:10px}
+input{width:100%;padding:12px;margin-top:6px;background:#222;color:#fff;border:1px solid var(--border);border-radius:10px}
 button,.btn{margin-top:18px;width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:12px;font-weight:700;cursor:pointer}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .result{margin-top:18px;background:var(--panel2);padding:16px;border-radius:12px}

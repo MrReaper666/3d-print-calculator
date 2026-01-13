@@ -22,12 +22,9 @@
 <button onclick="window.print()">🖨️ Print / Save PDF</button>
 
 <script>
-const s=JSON.parse(localStorage.getItem("settings")||"{}");
-const cur=s.currency||"£";
 const d=JSON.parse(localStorage.getItem("quote")||"{}");
-
 q.innerHTML=d.sell?
- "Grams: "+d.g+"g<br>Time: "+d.time.toFixed(2)+"h<br><br><strong>TOTAL: "+cur+d.sell.toFixed(2)+"</strong>"
+ "Grams: "+d.g+"g<br>Time: "+d.time.toFixed(2)+"h<br><br><strong>TOTAL: £"+d.sell.toFixed(2)+"</strong>"
  :"No quote yet.";
 </script>
 
