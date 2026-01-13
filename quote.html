@@ -7,19 +7,24 @@
 <body>
 <div class="layout">
 <aside class="sidebar">
- <div class="logo"><div class="logo-box">R</div><div>R PRINTS</div></div>
+ <div class="logo">
+  <div class="logo-box">R</div>
+  <div>R PRINTS</div>
+ </div>
  <nav class="nav">
-  <a href="index.html">Home</a>
-  <a href="calculator.html">Calculator</a>
-  <a href="settings.html">Settings</a>
-  <a href="quote.html">Quote</a>
+  <a href="index.html" class=>Home</a>
+  <a href="calculator.html" class=>Calculator</a>
+  <a href="settings.html" class=>Settings</a>
+  <a href="quote.html" class=active>Quote</a>
+  <a href="stl.html" class=>Upload STL</a>
  </nav>
 </aside>
-<main class="main"><section class="card">
+<main class="main">
+<section class="card">
 
 <h2>Quote</h2>
 <div class=result id=q></div>
-<button onclick="window.print()">🖨️ Print / Save PDF</button>
+<button onclick=window.print()>🖨️ Print / Save PDF</button>
 <script>
 const d=JSON.parse(localStorage.getItem("quote")||"{}");
 q.innerHTML=d.sell?
@@ -27,14 +32,7 @@ q.innerHTML=d.sell?
  :"No quote yet.";
 </script>
 
-</section></main></div>
-<div id="toast" class="toast"></div>
-<script>
-function showToast(msg){
- const t=document.getElementById("toast");
- t.textContent=msg;
- t.classList.add("show");
- setTimeout(()=>t.classList.remove("show"),10000);
-}
-</script>
+</section>
+</main>
+</div>
 </body></html>
