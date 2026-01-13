@@ -15,22 +15,17 @@
   <a href="index.html" class=>Home</a>
   <a href="calculator.html" class=>Calculator</a>
   <a href="settings.html" class=>Settings</a>
-  <a href="quote.html" class=active>Quote</a>
-  <a href="stl.html" class=>Upload STL</a>
+  <a href="quote.html" class=>Quote</a>
+  <a href="stl.html" class=active>Upload STL</a>
  </nav>
 </aside>
 <main class="main">
 <section class="card">
 
-<h2>Quote</h2>
-<div class=result id=q></div>
-<button onclick=window.print()>🖨️ Print / Save PDF</button>
-<script>
-const d=JSON.parse(localStorage.getItem("quote")||"{}");
-q.innerHTML=d.sell?
- "Grams: "+d.g+"g<br>Time: "+d.time.toFixed(2)+"h<br><br><strong>TOTAL: £"+d.sell.toFixed(2)+"</strong>"
- :"No quote yet.";
-</script>
+<h2>Upload STL (coming next)</h2>
+<p>This will later estimate filament automatically.</p>
+<input type=file disabled>
+<p class=muted>STL parsing will be added later.</p>
 
 </section>
 </main>

@@ -1,55 +1,51 @@
-
 <!doctype html>
-<html><head><meta charset=utf-8><title>Calculator</title>
-<link rel="stylesheet" href="style.css"></head>
+<html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<title>R Prints</title>
+</head>
 <body>
-<div class="card">
-<h2>3D Print Calculator</h2>
+<div class="layout">
+<aside class="sidebar">
+ <div class="logo">
+  <div class="logo-box">R</div>
+  <div>R PRINTS</div>
+ </div>
+ <nav class="nav">
+  <a href="index.html" class=>Home</a>
+  <a href="calculator.html" class=active>Calculator</a>
+  <a href="settings.html" class=>Settings</a>
+  <a href="quote.html" class=>Quote</a>
+  <a href="stl.html" class=>Upload STL</a>
+ </nav>
+</aside>
+<main class="main">
+<section class="card">
 
-<label>Filament price (£/kg)</label>
-<input id="price">
-
-<label>Grams used</label>
-<input id="grams">
-
-<div class="grid">
- <div><label>Hours</label><input id="hours"></div>
- <div><label>Minutes</label><input id="minutes"></div>
+<h2>Calculator</h2>
+<label>Filament £/kg</label><input id=price>
+<label>Grams</label><input id=g>
+<div class=grid>
+ <div><label>Hours</label><input id=h></div>
+ <div><label>Minutes</label><input id=m></div>
 </div>
-
-<label>Extra / labour (£)</label>
-<input id="extra">
-
-<button onclick="calc()">Calculate</button>
-
-<div class="result" id="out"></div>
-
-<a class="link" href="quote.html">Go to quote →</a>
-<a class="link" href="index.html">← Back</a>
-</div>
-
+<label>Extra £</label><input id=e>
+<button onclick=calc()>Calculate</button>
+<div class=result id=out></div>
 <script>
-const s=JSON.parse(localStorage.getItem("settings")||"{}");
-price.value=s.price||20;
-const grams=document.getElementById("grams");
-const hours=document.getElementById("hours");
-const minutes=document.getElementById("minutes");
-const extra=document.getElementById("extra");
-const out=document.getElementById("out");
-
+const set=JSON.parse(localStorage.getItem("settings")||"{}");
+price.value=set.price||20;
 function calc(){
- const g=+grams.value||0;
- const h=+hours.value||0;
- const m=+minutes.value||0;
- const ex=+extra.value||0;
- const time=h+(m/60);
- const cost=(g/1000)*(price.value||20)+ex;
- const sell=(g*(s.rateG||0.08))+(time*(s.rateH||2.5))+(s.base||2);
- localStorage.setItem("quote",JSON.stringify({g,time,sell}));
- out.innerHTML=
-  "Cost: £"+cost.toFixed(2)+"<br>"+
-  "<span class='good'>Sell: £"+sell.toFixed(2)+"</span><br>"+
-  "Profit: £"+(sell-cost).toFixed(2);
+ const gVal=+g.value||0,hVal=+h.value||0,mVal=+m.value||0,eVal=+e.value||0;
+ const time=hVal+(mVal/60);
+ const cost=(gVal/1000)*(price.value||20)+eVal;
+ const sell=(gVal*(set.rateG||0.08))+(time*(set.rateH||2.5))+(set.base||2);
+ localStorage.setItem("quote",JSON.stringify({g:gVal,time,sell}));
+ out.innerHTML="Cost: £"+cost.toFixed(2)+"<br><span class=good>Sell: £"+sell.toFixed(2)+"</span>";
 }
 </script>
+
+</section>
+</main>
+</div>
 </body></html>

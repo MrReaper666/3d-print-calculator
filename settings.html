@@ -1,47 +1,49 @@
-
 <!doctype html>
-<html><head><meta charset=utf-8><title>Settings</title>
-<link rel="stylesheet" href="style.css"></head>
+<html><head><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<title>R Prints</title>
+</head>
 <body>
-<div class="card">
-<h2>Pricing Settings</h2>
+<div class="layout">
+<aside class="sidebar">
+ <div class="logo">
+  <div class="logo-box">R</div>
+  <div>R PRINTS</div>
+ </div>
+ <nav class="nav">
+  <a href="index.html" class=>Home</a>
+  <a href="calculator.html" class=>Calculator</a>
+  <a href="settings.html" class=active>Settings</a>
+  <a href="quote.html" class=>Quote</a>
+  <a href="stl.html" class=>Upload STL</a>
+ </nav>
+</aside>
+<main class="main">
+<section class="card">
 
-<label>Filament price (£/kg)</label>
-<input id="price">
-
-<label>£ per gram</label>
-<input id="rg">
-
-<label>£ per hour</label>
-<input id="rh">
-
-<label>Base fee (£)</label>
-<input id="base">
-
-<button onclick="save()">Save settings</button>
-<a class="link" href="index.html">← Back</a>
-</div>
-
+<h2>Settings</h2>
+<label>Filament £/kg</label><input id=price>
+<label>£ per gram</label><input id=rg>
+<label>£ per hour</label><input id=rh>
+<label>Base fee £</label><input id=base>
+<button onclick=save()>Save</button>
 <script>
 const price=document.getElementById("price");
 const rg=document.getElementById("rg");
 const rh=document.getElementById("rh");
 const base=document.getElementById("base");
-
 const s=JSON.parse(localStorage.getItem("settings")||"{}");
-price.value=s.price||20;
-rg.value=s.rateG||0.08;
-rh.value=s.rateH||2.5;
-base.value=s.base||2;
-
+price.value=s.price||20;rg.value=s.rateG||0.08;rh.value=s.rateH||2.5;base.value=s.base||2;
 function save(){
  localStorage.setItem("settings",JSON.stringify({
-  price:+price.value,
-  rateG:+rg.value,
-  rateH:+rh.value,
-  base:+base.value
+  price:+price.value,rateG:+rg.value,rateH:+rh.value,base:+base.value
  }));
  alert("Saved");
 }
 </script>
+
+</section>
+</main>
+</div>
 </body></html>
