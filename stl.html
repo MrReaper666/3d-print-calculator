@@ -1,26 +1,49 @@
 <!doctype html>
-<html><head><meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="style.css">
-<title>R Prints</title></head>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <title>R Prints</title>
+</head>
+
 <body>
 <div class="layout">
-<aside class="sidebar">
- <div class="logo"><div class="logo-box">R</div><div>R PRINTS</div></div>
- <nav class="nav">
-  <a href="index.html">Home</a>
-  <a href="calculator.html">Calculator</a>
-  <a href="settings.html">Settings</a>
-  <a href="quote.html">Quote</a>
-  <a href="stl.html">Upload STL</a>
- </nav>
-</aside>
-<main class="main"><section class="card">
 
-<h2>Upload STL</h2>
-<p>STL auto-calculation coming soon.</p>
-<input type=file disabled>
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-box">R</div>
+      <div>R PRINTS</div>
+    </div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="calculator.html">Calculator</a>
+      <a href="settings.html">Settings</a>
+      <a href="quote.html">Quote</a>
+      <a href="stl.html">Upload STL</a>
+    </nav>
+  </aside>
 
-</section></main>
+  <main class="main">
+    <section class="card">
+
+      <h2>Upload STL</h2>
+
+      <input type="file" id="stlFile" accept=".stl">
+      <p id="stlStatus">Select an STL file</p>
+
+      <div id="stlResults" style="display:none; margin-top:15px;">
+        <p><strong>Volume:</strong> <span id="volume"></span> cm³</p>
+        <p><strong>Estimated Weight:</strong> <span id="weight"></span> g</p>
+        <button onclick="sendToCalculator()">Send to Calculator</button>
+      </div>
+
+    </section>
+  </main>
+
 </div>
-</body></html>
+
+<!-- MUST be last -->
+<script src="stl.js"></script>
+</body>
+</html>
