@@ -24,7 +24,6 @@ function initViewer() {
 
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
@@ -62,77 +61,49 @@ function loadSTL(buffer) {
   const loader = new THREE.STLLoader();
   const geometry = loader.parse(buffer);
 
-  if (mesh) {
-    scene.remove(mesh);
-    mesh.geometry.dispose();
-  }
+  if (mesh) scene.remove(mesh);
 
-  geometry.computeBoundingBox();
   geometry.center();
   geometry.computeVertexNormals();
 
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x00c8ff,
-    metalness: 0.15,
-    roughness: 0.55
-  });
-
-  mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
-
-  // === SCALE MODEL TO VIEW ===
-  const box = new THREE.Box3().setFromObject(mesh);
-  const size = box.getSize(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z);
-
-  const scale = 100 / maxDim;
-  mesh.scale.setScalar(scale);
-
-  // === RECALCULATE AFTER SCALE ===
-  const scaledBox = new THREE.Box3().setFromObject(mesh);
-  const scaledSize = scaledBox.getSize(new THREE.Vector3());
-  const center = scaledBox.getCenter(new THREE.Vector3());
-
-  // === CAMERA FIT ===
-  const distance = Math.max(
-    scaledSize.x,
-    scaledSize.y,
-    scaledSize.z
-  ) * 1.5;
-
-  camera.position.set(
-    center.x + distance,
-    center.y + distance,
-    center.z + distance
+  mesh = new THREE.Mesh(
+    geometry,
+    new THREE.MeshStandardMaterial({
+      color: 0x00c8ff,
+      metalness: 0.2,
+      roughness: 0.5
+    })
   );
 
-  camera.lookAt(center);
-  controls.target.copy(center);
-  controls.update();
+  scene.add(mesh);
+
+  const box = new THREE.Box3().setFromObject(mesh);
+  const size = box.getSize(new THREE.Vector3());
+  const dist = Math.max(size.x, size.y, size.z) * 1.5;
+
+  camera.position.set(dist, dist, dist);
+  camera.lookAt(box.getCenter(new THREE.Vector3()));
+  controls.target.copy(box.getCenter(new THREE.Vector3()));
 }
 
 function calculateVolume(buffer) {
   const dv = new DataView(buffer);
-  const triangles = (dv.byteLength - 84) / 50;
-  let volume = 0;
+  const tris = (dv.byteLength - 84) / 50;
+  let vol = 0;
 
-  for (let i = 0; i < triangles; i++) {
+  for (let i = 0; i < tris; i++) {
     const o = 84 + i * 50 + 12;
-    const v1 = readVertex(dv, o);
-    const v2 = readVertex(dv, o + 12);
-    const v3 = readVertex(dv, o + 24);
-    volume += signedVolume(v1, v2, v3);
+    vol += signedVolume(
+      readVertex(dv, o),
+      readVertex(dv, o + 12),
+      readVertex(dv, o + 24)
+    );
   }
 
-  volume = Math.abs(volume) / 1000; // mm³ → cm³
-  const weight = volume * densityPLA;
-
-  document.getElementById("volume").textContent = volume.toFixed(2);
-  document.getElementById("weight").textContent = weight.toFixed(1);
+  vol = Math.abs(vol) / 1000;
+  document.getElementById("volume").textContent = vol.toFixed(2);
+  document.getElementById("weight").textContent = (vol * densityPLA).toFixed(1);
   document.getElementById("stlResults").style.display = "block";
-
-  localStorage.setItem("stlVolume", volume);
-  localStorage.setItem("stlWeight", weight);
 }
 
 function readVertex(dv, o) {
