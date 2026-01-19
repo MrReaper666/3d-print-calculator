@@ -1,4 +1,4 @@
-const densityPLA = 1.24;
+const densityPLA = 1.24; // g/cm³
 
 let scene, camera, renderer, controls, mesh;
 
@@ -7,11 +7,17 @@ initViewer();
 document.getElementById("stlFile").addEventListener("change", handleFile);
 
 function initViewer() {
+  const viewer = document.getElementById("viewer");
+
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111111);
 
-  camera = new THREE.PerspectiveCamera(45, viewer.clientWidth / viewer.clientHeight, 0.1, 1000);
-  camera.position.set(0, 0, 100);
+  camera = new THREE.PerspectiveCamera(
+    45,
+    viewer.clientWidth / viewer.clientHeight,
+    0.1,
+    1000
+  );
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(viewer.clientWidth, viewer.clientHeight);
@@ -21,9 +27,13 @@ function initViewer() {
   controls.enableDamping = true;
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
   const light = new THREE.DirectionalLight(0xffffff, 0.8);
   light.position.set(1, 1, 1);
   scene.add(light);
+
+  const grid = new THREE.GridHelper(100, 20, 0x444444, 0x222222);
+  scene.add(grid);
 
   animate();
 }
@@ -54,25 +64,33 @@ function loadSTL(buffer) {
 
   if (mesh) scene.remove(mesh);
 
+  geometry.computeBoundingBox();
   geometry.center();
   geometry.computeVertexNormals();
 
   const material = new THREE.MeshStandardMaterial({
-    color: 0x888888,
-    metalness: 0.1,
-    roughness: 0.6
+    color: 0x00c8ff,
+    metalness: 0.2,
+    roughness: 0.5
   });
 
   mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
 
+  // Auto scale
   const box = new THREE.Box3().setFromObject(mesh);
-  const size = box.getSize(new THREE.Vector3()).length();
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 50 / maxDim;
+  mesh.scale.setScalar(scale);
+
+  box.setFromObject(mesh);
   const center = box.getCenter(new THREE.Vector3());
 
-  controls.target.copy(center);
-  camera.position.set(center.x, center.y, size);
+  camera.position.set(center.x, center.y, maxDim * 2);
   camera.lookAt(center);
+  controls.target.copy(center);
+  controls.update();
 }
 
 function calculateVolume(buffer) {
@@ -90,7 +108,7 @@ function calculateVolume(buffer) {
     volume += signedVolume(v1, v2, v3);
   }
 
-  volume = Math.abs(volume) / 1000;
+  volume = Math.abs(volume) / 1000; // mm³ → cm³
   const weight = volume * densityPLA;
 
   document.getElementById("volume").textContent = volume.toFixed(2);
