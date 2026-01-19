@@ -32,6 +32,10 @@
       <input type="file" id="stlFile" accept=".stl">
       <p id="stlStatus">Select an STL file</p>
 
+      <!-- 3D Viewer -->
+      <div id="viewer" style="width:100%; height:300px; margin-top:15px;"></div>
+
+      <!-- Results -->
       <div id="stlResults" style="display:none; margin-top:15px;">
         <p><strong>Volume:</strong> <span id="volume"></span> cm³</p>
         <p><strong>Estimated Weight:</strong> <span id="weight"></span> g</p>
@@ -48,5 +52,6 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/examples/js/loaders/STLLoader.js"></script>
 <script src="stl.js"></script>
+
 </body>
 </html>
