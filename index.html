@@ -1,28 +1,1220 @@
-<!doctype html>
-<html><head><meta charset=utf-8>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="style.css">
-<title>R Prints</title></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>R PRINTS — 3D Print Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #08090a;
+  --surface: #0f1114;
+  --surface2: #161a1e;
+  --surface3: #1c2127;
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0,229,255,0.12);
+  --cyan-glow: rgba(0,229,255,0.25);
+  --orange: #ff6d00;
+  --orange-dim: rgba(255,109,0,0.12);
+  --green: #00e676;
+  --green-dim: rgba(0,230,118,0.12);
+  --red: #ff1744;
+  --text: #e8eaed;
+  --muted: #6b7280;
+  --border: #1e2328;
+  --radius: 10px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Chakra Petch', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === NOISE OVERLAY === */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* === LAYOUT === */
+.app { display: flex; min-height: 100vh; }
+
+/* === SIDEBAR === */
+.sidebar {
+  width: 72px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: width 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.sidebar:hover { width: 220px; }
+
+.logo {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, var(--cyan), #0091ea);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 20px;
+  color: #000;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px var(--cyan-glow);
+}
+
+.logo-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  margin-top: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.sidebar:hover .logo-text { opacity: 1; }
+
+.nav-items {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-transform: uppercase;
+}
+
+.nav-btn:hover { color: var(--text); background: var(--surface2); }
+.nav-btn.active { color: var(--cyan); background: var(--cyan-dim); }
+
+.nav-btn svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  stroke-width: 1.5;
+}
+
+.nav-label {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.sidebar:hover .nav-label { opacity: 1; }
+
+.nav-bottom {
+  margin-top: auto;
+  width: 100%;
+  padding: 0 10px 10px;
+}
+
+/* === MAIN CONTENT === */
+.content {
+  margin-left: 72px;
+  flex: 1;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+/* === PAGES === */
+.page {
+  display: none;
+  animation: pageIn 0.35s ease-out;
+}
+
+.page.active { display: block; }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === PAGE HEADER === */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.page-header h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.page-header .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+/* === CARDS === */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan-glow), transparent);
+}
+
+.card-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+/* === INPUTS === */
+.field { margin-bottom: 16px; }
+
+.field label {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.field input, .field select {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.field input:focus, .field select:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px var(--cyan-dim);
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field-row-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+/* === BUTTONS === */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--cyan), #0091ea);
+  color: #000;
+  box-shadow: 0 4px 15px var(--cyan-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px var(--cyan-glow);
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover { background: var(--surface3); }
+
+.btn-orange {
+  background: linear-gradient(135deg, var(--orange), #e65100);
+  color: #fff;
+  box-shadow: 0 4px 15px var(--orange-dim);
+}
+
+.btn-green {
+  background: linear-gradient(135deg, var(--green), #00c853);
+  color: #000;
+  box-shadow: 0 4px 15px var(--green-dim);
+}
+
+.btn-full { width: 100%; }
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* === STAT CARDS === */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+}
+
+.stat-card.cyan::after { background: var(--cyan); }
+.stat-card.orange::after { background: var(--orange); }
+.stat-card.green::after { background: var(--green); }
+.stat-card.red::after { background: var(--red); }
+
+.stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.stat-value.cyan { color: var(--cyan); }
+.stat-value.orange { color: var(--orange); }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+
+/* === RESULT BOX === */
+.result-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 18px;
+  display: none;
+}
+
+.result-box.show { display: block; animation: pageIn 0.3s ease-out; }
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+.result-row:last-child { border-bottom: none; }
+.result-row .label { color: var(--muted); }
+.result-row .value { font-weight: 700; }
+.result-row .value.big { font-size: 22px; color: var(--green); }
+.result-row .value.cost { color: var(--orange); }
+
+/* === STL VIEWER === */
+#viewer {
+  width: 100%;
+  height: 350px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 48px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-bottom: 16px;
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--cyan);
+  background: var(--cyan-dim);
+}
+
+.drop-zone svg {
+  width: 48px;
+  height: 48px;
+  stroke: var(--muted);
+  margin-bottom: 12px;
+}
+
+.drop-zone p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.drop-zone .highlight { color: var(--cyan); font-weight: 700; }
+
+/* === HISTORY TABLE === */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.history-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-table tr:hover td { background: var(--surface2); }
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.badge-profit { background: var(--green-dim); color: var(--green); }
+.badge-loss { background: rgba(255,23,68,0.12); color: var(--red); }
+
+/* === FILAMENT SELECT === */
+.filament-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filament-chip {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface2);
+  color: var(--muted);
+}
+
+.filament-chip:hover { border-color: var(--cyan); color: var(--text); }
+.filament-chip.active { border-color: var(--cyan); background: var(--cyan-dim); color: var(--cyan); }
+
+/* === TOAST === */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 14px 24px;
+  background: var(--surface3);
+  border: 1px solid var(--cyan);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--cyan);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  z-index: 10000;
+  animation: toastIn 0.3s ease-out, toastOut 0.3s 2.5s ease-in forwards;
+}
+
+@keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(20px); } }
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    flex-direction: row;
+    padding: 10px;
+    overflow-x: auto;
+  }
+  .sidebar:hover { width: 100%; }
+  .nav-items { flex-direction: row; margin-top: 0; gap: 2px; }
+  .nav-label { display: none; }
+  .logo-text { display: none; }
+  .nav-bottom { display: none; }
+  .content { margin-left: 0; padding: 16px; }
+  .field-row, .field-row-3 { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media print {
+  .sidebar, .btn, .nav-items, .drop-zone { display: none !important; }
+  .content { margin-left: 0; }
+  body { background: #fff; color: #000; }
+  .card, .stat-card { border: 1px solid #ccc; background: #fff; }
+  .stat-value, .result-row .value { color: #000 !important; }
+}
+</style>
+</head>
 <body>
-<div class="layout">
-<aside class="sidebar">
- <div class="logo"><div class="logo-box">R</div><div>R PRINTS</div></div>
- <nav class="nav">
-  <a href="index.html">Home</a>
-  <a href="calculator.html">Calculator</a>
-  <a href="settings.html">Settings</a>
-  <a href="quote.html">Quote</a>
-  <a href="stl.html">Upload STL</a>
- </nav>
-</aside>
-<main class="main"><section class="card">
 
-<h1>Welcome</h1>
-<p>What would you like to do?</p>
-<a class="btn" href="calculator.html">🧮 Calculate a print</a>
-<a class="btn" href="settings.html">⚙️ Settings</a>
-<a class="btn" href="quote.html">🧾 View quote</a>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">R</div>
+    <div class="logo-text">R PRINTS</div>
+    <div class="nav-items">
+      <button class="nav-btn active" onclick="showPage('dashboard')" data-page="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-btn" onclick="showPage('calculator')" data-page="calculator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+        <span class="nav-label">Calculator</span>
+      </button>
+      <button class="nav-btn" onclick="showPage('stl')" data-page="stl">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span class="nav-label">STL Upload</span>
+      </button>
+      <button class="nav-btn" onclick="showPage('history')" data-page="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="nav-label">History</span>
+      </button>
+      <button class="nav-btn" onclick="showPage('settings')" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span class="nav-label">Settings</span>
+      </button>
+    </div>
+    <div class="nav-bottom">
+      <button class="nav-btn" onclick="exportAll()" style="color:var(--orange)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="nav-label">Export</span>
+      </button>
+    </div>
+  </aside>
 
-</section></main>
+  <div class="content">
+
+    <!-- ====== DASHBOARD ====== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <span class="tag">Overview</span>
+      </div>
+
+      <div class="stats-row" id="dashStats"></div>
+
+      <div class="card">
+        <div class="card-title">Recent Prints</div>
+        <div id="dashRecent"></div>
+      </div>
+    </div>
+
+    <!-- ====== CALCULATOR ====== -->
+    <div class="page" id="page-calculator">
+      <div class="page-header">
+        <h1>Calculator</h1>
+        <span class="tag">Price a Print</span>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Filament Type</div>
+        <div class="filament-chips" id="filamentChips"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Print Details</div>
+        <div class="field">
+          <label>Print Name</label>
+          <input id="printName" placeholder="e.g. Dragon Figurine">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Weight (grams)</label>
+            <input id="calcGrams" type="number" placeholder="0">
+          </div>
+          <div class="field">
+            <label>Filament Price (£/kg)</label>
+            <input id="calcFilPrice" type="number" placeholder="20">
+          </div>
+        </div>
+        <div class="field-row-3">
+          <div class="field">
+            <label>Hours</label>
+            <input id="calcHours" type="number" placeholder="0">
+          </div>
+          <div class="field">
+            <label>Minutes</label>
+            <input id="calcMins" type="number" placeholder="0">
+          </div>
+          <div class="field">
+            <label>Extras (£)</label>
+            <input id="calcExtra" type="number" placeholder="0">
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary btn-full" onclick="calculate()">Calculate Price</button>
+        </div>
+
+        <div class="result-box" id="calcResult">
+          <div class="result-row"><span class="label">Material Cost</span><span class="value cost" id="resMaterial">—</span></div>
+          <div class="result-row"><span class="label">Time Cost</span><span class="value cost" id="resTime">—</span></div>
+          <div class="result-row"><span class="label">Base Fee</span><span class="value cost" id="resBase">—</span></div>
+          <div class="result-row"><span class="label">Extras</span><span class="value cost" id="resExtra">—</span></div>
+          <div class="result-row" style="border-top:2px solid var(--border);padding-top:14px">
+            <span class="label">Total Cost</span><span class="value cost" id="resTotalCost">—</span>
+          </div>
+          <div class="result-row">
+            <span class="label" style="font-size:15px;color:var(--text)">Sell Price</span>
+            <span class="value big" id="resSell">—</span>
+          </div>
+          <div class="result-row">
+            <span class="label">Profit</span><span class="value" id="resProfit" style="color:var(--green)">—</span>
+          </div>
+          <div class="result-row">
+            <span class="label">Margin</span><span class="value" id="resMargin" style="color:var(--cyan)">—</span>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-green btn-full" onclick="saveToHistory()">Save to History</button>
+            <button class="btn btn-secondary btn-full" onclick="generateQuote()">Generate Quote</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== STL UPLOAD ====== -->
+    <div class="page" id="page-stl">
+      <div class="page-header">
+        <h1>STL Upload</h1>
+        <span class="tag">3D Preview</span>
+      </div>
+
+      <div class="card">
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('stlFile').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p>Drag & drop an STL file or <span class="highlight">browse</span></p>
+          <p id="stlFileName" style="margin-top:8px;color:var(--cyan);font-weight:700;display:none"></p>
+        </div>
+        <input type="file" id="stlFile" accept=".stl" style="display:none">
+        <div id="viewer"></div>
+
+        <div class="field-row" id="stlResults" style="display:none">
+          <div class="stat-card cyan">
+            <div class="stat-label">Volume</div>
+            <div class="stat-value cyan" id="stlVolume">—</div>
+            <div style="font-size:11px;color:var(--muted)">cm³</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Est. Weight</div>
+            <div class="stat-value orange" id="stlWeight">—</div>
+            <div style="font-size:11px;color:var(--muted)">grams</div>
+          </div>
+        </div>
+
+        <div class="btn-group" id="stlActions" style="display:none">
+          <button class="btn btn-primary btn-full" onclick="sendToCalc()">Send to Calculator</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== HISTORY ====== -->
+    <div class="page" id="page-history">
+      <div class="page-header">
+        <h1>History</h1>
+        <span class="tag" id="histCount">0 prints</span>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="card-title" style="margin-bottom:0">Print Log</div>
+          <button class="btn btn-secondary" onclick="clearHistory()" style="width:auto;padding:8px 16px;font-size:11px">Clear All</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="history-table" id="histTable">
+            <thead>
+              <tr><th>Name</th><th>Date</th><th>Weight</th><th>Time</th><th>Cost</th><th>Sell</th><th>Profit</th></tr>
+            </thead>
+            <tbody id="histBody"></tbody>
+          </table>
+        </div>
+        <p id="histEmpty" style="text-align:center;color:var(--muted);padding:30px;display:none">No prints yet. Use the calculator to add one.</p>
+      </div>
+    </div>
+
+    <!-- ====== SETTINGS ====== -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h1>Settings</h1>
+        <span class="tag">Pricing Config</span>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Pricing Rates</div>
+        <div class="field-row">
+          <div class="field">
+            <label>£ per gram</label>
+            <input id="setRateG" type="number" step="0.01">
+          </div>
+          <div class="field">
+            <label>£ per hour</label>
+            <input id="setRateH" type="number" step="0.1">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Base Fee (£)</label>
+            <input id="setBase" type="number" step="0.5">
+          </div>
+          <div class="field">
+            <label>Default Filament £/kg</label>
+            <input id="setFilPrice" type="number">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Filament Library</div>
+        <div class="field-row-3">
+          <div class="field"><label>Name</label><input id="newFilName" placeholder="e.g. Silk Gold"></div>
+          <div class="field"><label>Price £/kg</label><input id="newFilPrice" type="number" placeholder="25"></div>
+          <div class="field"><label>Density g/cm³</label><input id="newFilDensity" type="number" step="0.01" placeholder="1.24"></div>
+        </div>
+        <button class="btn btn-secondary" onclick="addFilament()" style="margin-bottom:16px">+ Add Filament</button>
+        <div id="filamentList"></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+    <!-- ====== QUOTE ====== -->
+    <div class="page" id="page-quote">
+      <div class="page-header">
+        <h1>Quote</h1>
+        <span class="tag">Customer Ready</span>
+      </div>
+
+      <div class="card" id="quoteCard">
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--cyan);letter-spacing:4px">R PRINTS</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">3D Printing Service — Quote</div>
+        </div>
+        <div id="quoteContent"></div>
+        <button class="btn btn-primary btn-full" onclick="window.print()" style="margin-top:20px">Print / Save PDF</button>
+      </div>
+    </div>
+
+  </div>
 </div>
-</body></html>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===== STATE =====
+let settings = JSON.parse(localStorage.getItem('rp_settings') || '{}');
+let history = JSON.parse(localStorage.getItem('rp_history') || '[]');
+let filaments = JSON.parse(localStorage.getItem('rp_filaments') || 'null');
+let lastCalc = null;
+let selectedFilament = 0;
+
+// Defaults
+if (!settings.rateG) settings.rateG = 0.08;
+if (!settings.rateH) settings.rateH = 2.5;
+if (!settings.base) settings.base = 2;
+if (!settings.filPrice) settings.filPrice = 20;
+
+if (!filaments) {
+  filaments = [
+    { name: 'PLA', price: 20, density: 1.24 },
+    { name: 'PETG', price: 22, density: 1.27 },
+    { name: 'ABS', price: 24, density: 1.04 },
+    { name: 'TPU', price: 30, density: 1.21 },
+    { name: 'Silk PLA', price: 28, density: 1.24 }
+  ];
+}
+
+// ===== NAVIGATION =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelector(`[data-page="${id}"]`)?.classList.add('active');
+
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'history') renderHistory();
+  if (id === 'settings') loadSettings();
+}
+
+// ===== FILAMENT CHIPS =====
+function renderFilamentChips() {
+  const el = document.getElementById('filamentChips');
+  el.innerHTML = filaments.map((f, i) =>
+    `<div class="filament-chip ${i === selectedFilament ? 'active' : ''}" onclick="selectFilament(${i})">${f.name} — £${f.price}/kg</div>`
+  ).join('');
+}
+
+function selectFilament(i) {
+  selectedFilament = i;
+  document.getElementById('calcFilPrice').value = filaments[i].price;
+  renderFilamentChips();
+}
+
+// ===== CALCULATOR =====
+function calculate() {
+  const name = document.getElementById('printName').value || 'Unnamed Print';
+  const g = +document.getElementById('calcGrams').value || 0;
+  const filPrice = +document.getElementById('calcFilPrice').value || settings.filPrice;
+  const h = +document.getElementById('calcHours').value || 0;
+  const m = +document.getElementById('calcMins').value || 0;
+  const extra = +document.getElementById('calcExtra').value || 0;
+  const time = h + (m / 60);
+
+  const materialCost = (g / 1000) * filPrice;
+  const timeCost = time * settings.rateH;
+  const baseFee = settings.base;
+  const totalCost = materialCost + extra;
+  const sellPrice = (g * settings.rateG) + timeCost + baseFee + extra;
+  const profit = sellPrice - totalCost;
+  const margin = sellPrice > 0 ? (profit / sellPrice * 100) : 0;
+
+  document.getElementById('resMaterial').textContent = '£' + materialCost.toFixed(2);
+  document.getElementById('resTime').textContent = '£' + timeCost.toFixed(2);
+  document.getElementById('resBase').textContent = '£' + baseFee.toFixed(2);
+  document.getElementById('resExtra').textContent = '£' + extra.toFixed(2);
+  document.getElementById('resTotalCost').textContent = '£' + totalCost.toFixed(2);
+  document.getElementById('resSell').textContent = '£' + sellPrice.toFixed(2);
+  document.getElementById('resProfit').textContent = '£' + profit.toFixed(2);
+  document.getElementById('resMargin').textContent = margin.toFixed(1) + '%';
+
+  document.getElementById('calcResult').classList.add('show');
+
+  lastCalc = { name, g, time, filPrice, extra, materialCost, timeCost, baseFee, totalCost, sellPrice, profit, margin, date: new Date().toISOString() };
+}
+
+function saveToHistory() {
+  if (!lastCalc) return;
+  history.unshift(lastCalc);
+  localStorage.setItem('rp_history', JSON.stringify(history));
+  toast('Print saved to history');
+}
+
+function generateQuote() {
+  if (!lastCalc) return;
+  localStorage.setItem('rp_quote', JSON.stringify(lastCalc));
+  showPage('quote');
+  renderQuote();
+}
+
+// ===== QUOTE =====
+function renderQuote() {
+  const q = JSON.parse(localStorage.getItem('rp_quote') || 'null');
+  const el = document.getElementById('quoteContent');
+  if (!q) { el.innerHTML = '<p style="text-align:center;color:var(--muted)">No quote generated yet.</p>'; return; }
+  const d = new Date(q.date);
+  el.innerHTML = `
+    <div class="result-row"><span class="label">Date</span><span class="value">${d.toLocaleDateString()}</span></div>
+    <div class="result-row"><span class="label">Item</span><span class="value">${q.name}</span></div>
+    <div class="result-row"><span class="label">Material</span><span class="value">${q.g}g</span></div>
+    <div class="result-row"><span class="label">Print Time</span><span class="value">${q.time.toFixed(1)}h</span></div>
+    <div class="result-row" style="border-top:2px solid var(--border);padding-top:14px;margin-top:10px">
+      <span class="label" style="font-size:16px;font-weight:700;color:var(--text)">Total</span>
+      <span class="value big">£${q.sellPrice.toFixed(2)}</span>
+    </div>
+  `;
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const totalPrints = history.length;
+  const totalRevenue = history.reduce((s, h) => s + (h.sellPrice || 0), 0);
+  const totalProfit = history.reduce((s, h) => s + (h.profit || 0), 0);
+  const totalWeight = history.reduce((s, h) => s + (h.g || 0), 0);
+
+  document.getElementById('dashStats').innerHTML = `
+    <div class="stat-card cyan"><div class="stat-label">Total Prints</div><div class="stat-value cyan">${totalPrints}</div></div>
+    <div class="stat-card orange"><div class="stat-label">Revenue</div><div class="stat-value orange">£${totalRevenue.toFixed(2)}</div></div>
+    <div class="stat-card green"><div class="stat-label">Profit</div><div class="stat-value green">£${totalProfit.toFixed(2)}</div></div>
+    <div class="stat-card cyan"><div class="stat-label">Filament Used</div><div class="stat-value cyan">${(totalWeight / 1000).toFixed(2)}kg</div></div>
+  `;
+
+  const recent = history.slice(0, 5);
+  const el = document.getElementById('dashRecent');
+  if (recent.length === 0) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">No prints yet.</p>'; return; }
+  el.innerHTML = `<table class="history-table"><thead><tr><th>Name</th><th>Sell</th><th>Profit</th></tr></thead><tbody>${
+    recent.map(h => `<tr><td>${h.name}</td><td>£${h.sellPrice.toFixed(2)}</td><td><span class="badge ${h.profit >= 0 ? 'badge-profit' : 'badge-loss'}">£${h.profit.toFixed(2)}</span></td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+// ===== HISTORY =====
+function renderHistory() {
+  const body = document.getElementById('histBody');
+  document.getElementById('histCount').textContent = history.length + ' prints';
+  document.getElementById('histEmpty').style.display = history.length ? 'none' : 'block';
+
+  body.innerHTML = history.map(h => {
+    const d = new Date(h.date);
+    return `<tr>
+      <td>${h.name}</td>
+      <td>${d.toLocaleDateString()}</td>
+      <td>${h.g}g</td>
+      <td>${h.time.toFixed(1)}h</td>
+      <td>£${h.totalCost.toFixed(2)}</td>
+      <td>£${h.sellPrice.toFixed(2)}</td>
+      <td><span class="badge ${h.profit >= 0 ? 'badge-profit' : 'badge-loss'}">£${h.profit.toFixed(2)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function clearHistory() {
+  if (!confirm('Clear all print history?')) return;
+  history = [];
+  localStorage.setItem('rp_history', JSON.stringify(history));
+  renderHistory();
+  toast('History cleared');
+}
+
+// ===== SETTINGS =====
+function loadSettings() {
+  document.getElementById('setRateG').value = settings.rateG;
+  document.getElementById('setRateH').value = settings.rateH;
+  document.getElementById('setBase').value = settings.base;
+  document.getElementById('setFilPrice').value = settings.filPrice;
+  renderFilamentList();
+}
+
+function saveSettings() {
+  settings.rateG = +document.getElementById('setRateG').value;
+  settings.rateH = +document.getElementById('setRateH').value;
+  settings.base = +document.getElementById('setBase').value;
+  settings.filPrice = +document.getElementById('setFilPrice').value;
+  localStorage.setItem('rp_settings', JSON.stringify(settings));
+  localStorage.setItem('rp_filaments', JSON.stringify(filaments));
+  toast('Settings saved');
+}
+
+function addFilament() {
+  const name = document.getElementById('newFilName').value;
+  const price = +document.getElementById('newFilPrice').value;
+  const density = +document.getElementById('newFilDensity').value || 1.24;
+  if (!name || !price) return;
+  filaments.push({ name, price, density });
+  localStorage.setItem('rp_filaments', JSON.stringify(filaments));
+  document.getElementById('newFilName').value = '';
+  document.getElementById('newFilPrice').value = '';
+  document.getElementById('newFilDensity').value = '';
+  renderFilamentList();
+  renderFilamentChips();
+  toast('Filament added');
+}
+
+function removeFilament(i) {
+  filaments.splice(i, 1);
+  localStorage.setItem('rp_filaments', JSON.stringify(filaments));
+  if (selectedFilament >= filaments.length) selectedFilament = 0;
+  renderFilamentList();
+  renderFilamentChips();
+}
+
+function renderFilamentList() {
+  document.getElementById('filamentList').innerHTML = filaments.map((f, i) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid var(--border)">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:13px">${f.name} — £${f.price}/kg — ${f.density} g/cm³</span>
+      <button onclick="removeFilament(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button>
+    </div>`
+  ).join('');
+}
+
+// ===== EXPORT =====
+function exportAll() {
+  const data = { settings, filaments, history };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rprints_backup_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  toast('Data exported');
+}
+
+// ===== TOAST =====
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ===== STL VIEWER =====
+let scene, camera, renderer, controls, stlMesh;
+
+function initViewer() {
+  const el = document.getElementById('viewer');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0f1114);
+
+  camera = new THREE.PerspectiveCamera(45, el.clientWidth / el.clientHeight, 0.1, 5000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(el.clientWidth, el.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  el.appendChild(renderer.domElement);
+
+  // OrbitControls inline (since we can't load the module)
+  camera.position.set(100, 100, 100);
+  camera.lookAt(0, 0, 0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+  dl.position.set(100, 200, 100);
+  scene.add(dl);
+  const dl2 = new THREE.DirectionalLight(0x00e5ff, 0.3);
+  dl2.position.set(-100, -50, -100);
+  scene.add(dl2);
+
+  const grid = new THREE.GridHelper(200, 20, 0x1e2328, 0x141414);
+  scene.add(grid);
+
+  let isDragging = false, prevX = 0, prevY = 0, rotX = 0.5, rotY = 0.5, dist = 200;
+
+  renderer.domElement.addEventListener('mousedown', e => { isDragging = true; prevX = e.clientX; prevY = e.clientY; });
+  window.addEventListener('mouseup', () => isDragging = false);
+  renderer.domElement.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    rotY += (e.clientX - prevX) * 0.005;
+    rotX += (e.clientY - prevY) * 0.005;
+    rotX = Math.max(-1.5, Math.min(1.5, rotX));
+    prevX = e.clientX; prevY = e.clientY;
+  });
+  renderer.domElement.addEventListener('wheel', e => {
+    dist += e.deltaY * 0.3;
+    dist = Math.max(20, Math.min(1000, dist));
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    camera.position.x = dist * Math.sin(rotY) * Math.cos(rotX);
+    camera.position.y = dist * Math.sin(rotX);
+    camera.position.z = dist * Math.cos(rotY) * Math.cos(rotX);
+    camera.lookAt(0, 0, 0);
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    const w = el.clientWidth, h = el.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+}
+
+// STL File handling
+document.getElementById('stlFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('stlFileName').textContent = file.name;
+  document.getElementById('stlFileName').style.display = 'block';
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    loadSTLBuffer(ev.target.result);
+    calcSTLVolume(ev.target.result);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// Drag & drop
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.endsWith('.stl')) return;
+  document.getElementById('stlFileName').textContent = file.name;
+  document.getElementById('stlFileName').style.display = 'block';
+  const reader = new FileReader();
+  reader.onload = ev => { loadSTLBuffer(ev.target.result); calcSTLVolume(ev.target.result); };
+  reader.readAsArrayBuffer(file);
+});
+
+function loadSTLBuffer(buffer) {
+  if (stlMesh) scene.remove(stlMesh);
+
+  // Parse binary STL
+  const dv = new DataView(buffer);
+  const tris = dv.getUint32(80, true);
+  const verts = new Float32Array(tris * 9);
+
+  for (let i = 0; i < tris; i++) {
+    const o = 84 + i * 50 + 12;
+    for (let v = 0; v < 3; v++) {
+      verts[i * 9 + v * 3] = dv.getFloat32(o + v * 12, true);
+      verts[i * 9 + v * 3 + 1] = dv.getFloat32(o + v * 12 + 4, true);
+      verts[i * 9 + v * 3 + 2] = dv.getFloat32(o + v * 12 + 8, true);
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+  geo.computeVertexNormals();
+  geo.center();
+
+  stlMesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+    color: 0x00e5ff,
+    metalness: 0.3,
+    roughness: 0.4,
+    flatShading: false
+  }));
+
+  scene.add(stlMesh);
+
+  const box = new THREE.Box3().setFromObject(stlMesh);
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  // Adjust camera distance via dist variable would need external access; use default
+}
+
+function calcSTLVolume(buffer) {
+  const dv = new DataView(buffer);
+  const tris = dv.getUint32(80, true);
+  let vol = 0;
+
+  for (let i = 0; i < tris; i++) {
+    const o = 84 + i * 50 + 12;
+    const ax = dv.getFloat32(o, true), ay = dv.getFloat32(o + 4, true), az = dv.getFloat32(o + 8, true);
+    const bx = dv.getFloat32(o + 12, true), by = dv.getFloat32(o + 16, true), bz = dv.getFloat32(o + 20, true);
+    const cx = dv.getFloat32(o + 24, true), cy = dv.getFloat32(o + 28, true), cz = dv.getFloat32(o + 32, true);
+    vol += (ax * by * cz + bx * cy * az + cx * ay * bz - ax * cy * bz - bx * ay * cz - cx * by * az) / 6;
+  }
+
+  vol = Math.abs(vol) / 1000;
+  const density = filaments[selectedFilament]?.density || 1.24;
+  const weight = vol * density;
+
+  document.getElementById('stlVolume').textContent = vol.toFixed(2);
+  document.getElementById('stlWeight').textContent = weight.toFixed(1);
+  document.getElementById('stlResults').style.display = 'grid';
+  document.getElementById('stlActions').style.display = 'flex';
+}
+
+function sendToCalc() {
+  const weight = document.getElementById('stlWeight').textContent;
+  showPage('calculator');
+  document.getElementById('calcGrams').value = parseFloat(weight);
+  document.getElementById('calcFilPrice').value = filaments[selectedFilament]?.price || settings.filPrice;
+}
+
+// ===== INIT =====
+renderFilamentChips();
+renderDashboard();
+initViewer();
+if (document.getElementById('page-quote').classList.contains('active')) renderQuote();
+document.getElementById('calcFilPrice').value = filaments[selectedFilament]?.price || settings.filPrice;
+</script>
+</body>
+</html>
