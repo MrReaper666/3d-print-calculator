@@ -370,6 +370,45 @@
   .dropzone .dz-title{font-weight:600; font-size:14px;}
   .dropzone .dz-sub{color:var(--text-faint); font-size:12px; margin-top:4px; font-family:var(--font-mono);}
 
+  .viewer-card{
+    margin-top:20px;
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    background:var(--bg-deep);
+    position:relative;
+    overflow:hidden;
+  }
+  .viewer-toolbar{
+    position:absolute; top:10px; left:12px; right:12px;
+    display:flex; justify-content:space-between; align-items:center;
+    z-index:5; pointer-events:none;
+  }
+  .viewer-toolbar .vt-label{
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--text-faint); background:rgba(10,18,29,0.6); padding:4px 8px; border-radius:6px;
+  }
+  .viewer-toolbar .vt-actions{display:flex; gap:6px; pointer-events:auto;}
+  .vt-btn{
+    font-family:var(--font-mono); font-size:10.5px; padding:5px 9px;
+    background:rgba(20,35,53,0.85); border:1px solid var(--border); color:var(--text-muted);
+    border-radius:6px; cursor:pointer; transition:all .15s;
+  }
+  .vt-btn:hover{color:var(--text); border-color:var(--text-faint);}
+  .vt-btn.on{color:var(--amber); border-color:var(--amber-dim);}
+  .viewer-canvas-wrap{width:100%; height:280px; position:relative; cursor:grab;}
+  .viewer-canvas-wrap:active{cursor:grabbing;}
+  .viewer-canvas-wrap canvas{display:block; width:100%; height:100%;}
+  .viewer-empty{
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:8px; color:var(--text-faint); font-family:var(--font-mono); font-size:11.5px; pointer-events:none;
+  }
+  .viewer-empty svg{width:26px; height:26px; stroke:var(--text-faint); opacity:.6;}
+  .viewer-hint{
+    position:absolute; bottom:10px; right:12px; z-index:5;
+    font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint);
+    background:rgba(10,18,29,0.6); padding:3px 8px; border-radius:6px;
+  }
+
   .mesh-stats{margin-top:20px; display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
   .mesh-stat{background:var(--bg-deep); border:1px solid var(--border-soft); border-radius:10px; padding:12px 14px;}
   .mesh-stat .l{font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-faint);}
@@ -613,6 +652,24 @@
             <input type="file" id="file-input" accept=".stl" style="display:none">
           </div>
 
+          <div class="viewer-card">
+            <div class="viewer-toolbar">
+              <span class="vt-label">3D Preview</span>
+              <div class="vt-actions">
+                <button class="vt-btn" id="vt-wireframe">Wireframe</button>
+                <button class="vt-btn" id="vt-reset">Reset View</button>
+              </div>
+            </div>
+            <div class="viewer-canvas-wrap" id="viewer-wrap">
+              <canvas id="viewer-canvas"></canvas>
+              <div class="viewer-empty" id="viewer-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                <span>Model preview appears here</span>
+              </div>
+            </div>
+            <div class="viewer-hint" id="viewer-hint" style="display:none;">Drag to orbit · scroll to zoom</div>
+          </div>
+
           <div class="field" style="margin-top:20px;">
             <label>Effective Density Factor — accounts for shells + infill, not solid fill</label>
             <div class="slider-row">
@@ -746,6 +803,7 @@
     </div>
   </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1095,6 +1153,7 @@
         $("#m-vol").textContent = result.volumeCm3.toFixed(2) + " cm³";
         updateWeightEstimate();
         $("#btn-send-calc").disabled = false;
+        loadMeshIntoViewer(result);
       }catch(err){
         toast("Couldn't parse this STL");
         console.error(err);
@@ -1150,6 +1209,8 @@
     let offset = 84;
     let volume = 0;
     let min = [Infinity,Infinity,Infinity], max = [-Infinity,-Infinity,-Infinity];
+    const positions = new Float32Array(triCount*9);
+    let p = 0;
     for (let i=0; i<triCount; i++){
       offset += 12; // skip normal
       const v = [];
@@ -1158,13 +1219,14 @@
         const y = dv.getFloat32(offset, true); offset+=4;
         const z = dv.getFloat32(offset, true); offset+=4;
         v.push([x,y,z]);
+        positions[p++]=x; positions[p++]=y; positions[p++]=z;
         min[0]=Math.min(min[0],x); min[1]=Math.min(min[1],y); min[2]=Math.min(min[2],z);
         max[0]=Math.max(max[0],x); max[1]=Math.max(max[1],y); max[2]=Math.max(max[2],z);
       }
       volume += signedTetraVolume(v[0], v[1], v[2]);
       offset += 2; // attribute byte count
     }
-    return finalizeMesh(volume, triCount, min, max);
+    return finalizeMesh(volume, triCount, min, max, positions);
   }
 
   function parseAsciiSTL(buffer){
@@ -1177,15 +1239,18 @@
     let volume = 0;
     let min = [Infinity,Infinity,Infinity], max = [-Infinity,-Infinity,-Infinity];
     let triCount = Math.floor(verts.length/3);
+    const positions = new Float32Array(triCount*9);
+    let p = 0;
     for (let i=0; i<triCount; i++){
       const v0=verts[i*3], v1=verts[i*3+1], v2=verts[i*3+2];
       volume += signedTetraVolume(v0,v1,v2);
       [v0,v1,v2].forEach(v=>{
+        positions[p++]=v[0]; positions[p++]=v[1]; positions[p++]=v[2];
         min[0]=Math.min(min[0],v[0]); min[1]=Math.min(min[1],v[1]); min[2]=Math.min(min[2],v[2]);
         max[0]=Math.max(max[0],v[0]); max[1]=Math.max(max[1],v[1]); max[2]=Math.max(max[2],v[2]);
       });
     }
-    return finalizeMesh(volume, triCount, min, max);
+    return finalizeMesh(volume, triCount, min, max, positions);
   }
 
   function signedTetraVolume(a,b,c){
@@ -1196,7 +1261,7 @@
     ) / 6.0;
   }
 
-  function finalizeMesh(volume, triCount, min, max){
+  function finalizeMesh(volume, triCount, min, max, positions){
     const volumeMm3 = Math.abs(volume);
     const volumeCm3 = volumeMm3 / 1000;
     const bbox = {
@@ -1204,8 +1269,173 @@
       y: isFinite(max[1]-min[1]) ? max[1]-min[1] : 0,
       z: isFinite(max[2]-min[2]) ? max[2]-min[2] : 0
     };
-    return { volumeCm3, triCount, bbox };
+    return { volumeCm3, triCount, bbox, positions, min, max };
   }
+
+  /* ---------------- 3D Viewer ---------------- */
+  const VIEWER_TRI_LIMIT = 600000; // skip live render above this for performance; stats still computed
+
+  let viewer = null; // lazily created
+
+  function ensureViewer(){
+    if (viewer || typeof THREE === "undefined") return viewer;
+    const wrap = $("#viewer-wrap");
+    const canvas = $("#viewer-canvas");
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 100000);
+
+    scene.add(new THREE.AmbientLight(0x8899aa, 0.7));
+    const key = new THREE.DirectionalLight(0xfff2d9, 0.9);
+    key.position.set(1, 1.4, 1);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0x38c7c2, 0.35);
+    fill.position.set(-1, -0.4, -0.8);
+    scene.add(fill);
+
+    const grid = new THREE.GridHelper(100, 10, 0x38c7c2, 0x26384f);
+    grid.material.opacity = 0.35;
+    grid.material.transparent = true;
+    scene.add(grid);
+
+    viewer = {
+      renderer, scene, camera, grid, mesh:null,
+      rotX:0.45, rotY:0.7, dist:100, targetDim:60,
+      dragging:false, lastX:0, lastY:0
+    };
+
+    function place(){
+      const r = viewer.dist;
+      camera.position.set(
+        r*Math.sin(viewer.rotY)*Math.cos(viewer.rotX),
+        r*Math.sin(viewer.rotX),
+        r*Math.cos(viewer.rotY)*Math.cos(viewer.rotX)
+      );
+      camera.lookAt(0,0,0);
+    }
+    viewer.place = place;
+    place();
+
+    wrap.addEventListener("pointerdown", e=>{
+      viewer.dragging = true; viewer.lastX = e.clientX; viewer.lastY = e.clientY;
+      wrap.setPointerCapture(e.pointerId);
+    });
+    wrap.addEventListener("pointermove", e=>{
+      if (!viewer.dragging) return;
+      const dx = e.clientX - viewer.lastX, dy = e.clientY - viewer.lastY;
+      viewer.lastX = e.clientX; viewer.lastY = e.clientY;
+      viewer.rotY += dx * 0.008;
+      viewer.rotX = Math.max(-1.35, Math.min(1.35, viewer.rotX + dy * 0.008));
+      place();
+    });
+    ["pointerup","pointerleave","pointercancel"].forEach(evt=>{
+      wrap.addEventListener(evt, ()=>{ viewer.dragging = false; });
+    });
+    wrap.addEventListener("wheel", e=>{
+      e.preventDefault();
+      viewer.dist = Math.max(viewer.targetDim*0.4, Math.min(viewer.targetDim*6, viewer.dist * (1 + e.deltaY*0.001)));
+      place();
+    }, { passive:false });
+
+    let idleSpin = true;
+    wrap.addEventListener("pointerdown", ()=> idleSpin = false);
+
+    function animate(){
+      requestAnimationFrame(animate);
+      if (idleSpin && !viewer.dragging){
+        viewer.rotY += 0.0018;
+        place();
+      }
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    const ro = new ResizeObserver(()=>{
+      const nw = wrap.clientWidth, nh = wrap.clientHeight;
+      if (nw===0||nh===0) return;
+      renderer.setSize(nw, nh, false);
+      camera.aspect = nw/nh;
+      camera.updateProjectionMatrix();
+    });
+    ro.observe(wrap);
+
+    return viewer;
+  }
+
+  function loadMeshIntoViewer(result){
+    if (typeof THREE === "undefined") return;
+    if (result.triCount > VIEWER_TRI_LIMIT){
+      $("#viewer-empty").style.display = "flex";
+      $("#viewer-empty").querySelector("span").textContent = "Mesh too large to preview live — stats above are still accurate";
+      $("#viewer-hint").style.display = "none";
+      return;
+    }
+    const v = ensureViewer();
+    if (!v) return;
+
+    if (v.mesh){
+      v.scene.remove(v.mesh);
+      v.mesh.geometry.dispose();
+      v.mesh.material.dispose();
+      v.mesh = null;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(result.positions, 3));
+    geometry.computeVertexNormals();
+
+    const cx = (result.min[0]+result.max[0])/2;
+    const cy = (result.min[1]+result.max[1])/2;
+    const cz = (result.min[2]+result.max[2])/2;
+    geometry.translate(-cx, -cy, -cz);
+
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xF5A623, metalness:0.12, roughness:0.55,
+      wireframe: wireframeOn
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation.x = -Math.PI/2; // STL is typically Z-up; three.js is Y-up
+    v.scene.add(mesh);
+    v.mesh = mesh;
+
+    const maxDim = Math.max(result.bbox.x, result.bbox.y, result.bbox.z, 1);
+    v.targetDim = maxDim;
+    v.dist = maxDim * 1.9;
+    v.rotX = 0.45; v.rotY = 0.7;
+    v.place();
+
+    const gridSize = maxDim * 2.4;
+    v.scene.remove(v.grid);
+    v.grid = new THREE.GridHelper(gridSize, 10, 0x38c7c2, 0x26384f);
+    v.grid.material.opacity = 0.35;
+    v.grid.material.transparent = true;
+    v.grid.position.y = -maxDim*0.001; // sit just under the model
+    v.scene.add(v.grid);
+
+    $("#viewer-empty").style.display = "none";
+    $("#viewer-hint").style.display = "block";
+  }
+
+  let wireframeOn = false;
+  $("#vt-wireframe").addEventListener("click", ()=>{
+    wireframeOn = !wireframeOn;
+    $("#vt-wireframe").classList.toggle("on", wireframeOn);
+    if (viewer && viewer.mesh){
+      viewer.mesh.material.wireframe = wireframeOn;
+      viewer.mesh.material.color.set(wireframeOn ? 0x38c7c2 : 0xF5A623);
+    }
+  });
+  $("#vt-reset").addEventListener("click", ()=>{
+    if (!viewer) return;
+    viewer.rotX = 0.45; viewer.rotY = 0.7;
+    viewer.dist = viewer.targetDim * 1.9;
+    viewer.place();
+  });
 
   /* ---------------- Init ---------------- */
   function init(){
