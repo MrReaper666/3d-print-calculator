@@ -3,770 +3,575 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>R PRINTS — 3D Print Calculator</title>
+<title>R PRINTS — 3D Print Pricing Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  @property --a1 { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-  @property --a2 { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-  @property --a3 { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-
   :root{
-    --bg:#0E1826;
-    --bg-deep:#0A121D;
-    --surface:#142335;
-    --surface-alt:#1B2C42;
-    --surface-raised:#1F3247;
-    --border:#26384F;
-    --border-soft:#1D2E43;
-    --text:#E7ECF2;
-    --text-muted:#8092AB;
-    --text-faint:#546480;
-    --amber:#F5A623;
-    --amber-dim:#8A6222;
-    --teal:#38C7C2;
-    --green:#6FCE7C;
-    --red:#F0625F;
-    --font-display:'Space Grotesk', sans-serif;
-    --font-mono:'JetBrains Mono', monospace;
-    --font-body:'Inter', sans-serif;
+    --page-bg:#EDEBE6;
+    --shell-bg:#19191B;
+    --rail-bg:#141416;
+    --panel-bg:#212124;
+    --panel-bg-2:#252528;
+    --panel-border:rgba(255,255,255,0.07);
+    --text:#F1F1EF;
+    --text-muted:#8C8C90;
+    --text-faint:#5B5B5F;
+    --lime:#A6E22E;
+    --lime-dim:#1D2410;
+    --violet:#8B7CF6;
+    --cyan:#4FD1C5;
+    --pink:#F472B6;
+    --coral:#FF6B5B;
+    --font:'Inter', sans-serif;
   }
 
   *{box-sizing:border-box; margin:0; padding:0;}
-
   html,body{height:100%;}
-
   body{
-    background:
-      repeating-linear-gradient(0deg, rgba(120,150,190,0.035) 0px, rgba(120,150,190,0.035) 1px, transparent 1px, transparent 32px),
-      repeating-linear-gradient(90deg, rgba(120,150,190,0.035) 0px, rgba(120,150,190,0.035) 1px, transparent 1px, transparent 32px),
-      var(--bg-deep);
+    background:var(--page-bg);
+    font-family:var(--font);
     color:var(--text);
-    font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
     display:flex;
+    justify-content:center;
+    padding:28px 20px;
   }
-
-  ::selection{background:var(--amber); color:#1a1200;}
-
-  /* ---------- Scrollbar ---------- */
-  ::-webkit-scrollbar{width:10px; height:10px;}
+  ::selection{background:var(--lime); color:#12220a;}
+  ::-webkit-scrollbar{width:9px; height:9px;}
   ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:6px;}
-  ::-webkit-scrollbar-thumb:hover{background:var(--text-faint);}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12); border-radius:8px;}
 
-  /* ---------- Sidebar ---------- */
-  .sidebar{
-    width:220px;
-    flex-shrink:0;
-    background:var(--surface);
-    border-right:1px solid var(--border-soft);
+  .app-shell{
+    width:100%; max-width:1400px;
+    background:var(--shell-bg);
+    border-radius:28px;
+    box-shadow:0 50px 90px -35px rgba(20,20,20,0.35), 0 0 0 1px rgba(0,0,0,0.04);
+    overflow:hidden;
     display:flex;
-    flex-direction:column;
-    position:sticky;
-    top:0;
-    height:100vh;
+    min-height:calc(100vh - 56px);
+  }
+  @media (max-width:860px){
+    body{padding:0;}
+    .app-shell{border-radius:0; min-height:100vh; flex-direction:column;}
   }
 
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    padding:22px 20px 18px;
+  /* ---------------- Rail ---------------- */
+  .rail{
+    width:88px; flex-shrink:0; background:var(--rail-bg);
+    display:flex; flex-direction:column; align-items:center;
+    padding:22px 0; border-right:1px solid var(--panel-border);
   }
-
-  .brand-mark{
-    width:34px; height:34px;
-    border-radius:8px;
-    background:linear-gradient(155deg, var(--amber), #c47f10);
+  @media (max-width:860px){
+    .rail{width:100%; flex-direction:row; padding:12px 16px; border-right:none; border-bottom:1px solid var(--panel-border); overflow-x:auto;}
+  }
+  .rail-logo{
+    width:42px; height:42px; border-radius:14px; flex-shrink:0;
+    background:linear-gradient(150deg, var(--violet), #5B4FCF);
     display:flex; align-items:center; justify-content:center;
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:16px;
-    color:#1a1200;
-    flex-shrink:0;
+    color:#fff; font-weight:800; font-size:16px; margin-bottom:20px;
   }
-
-  .brand-text{line-height:1.15;}
-  .brand-text .name{font-family:var(--font-display); font-weight:600; font-size:15px; letter-spacing:0.02em;}
-  .brand-text .sub{font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); letter-spacing:0.08em; text-transform:uppercase;}
-
-  .hazard{
-    height:4px;
-    margin:0 20px 18px;
-    background:repeating-linear-gradient(-45deg, var(--amber) 0 8px, var(--bg-deep) 8px 16px);
-    opacity:0.55;
-    border-radius:2px;
+  @media (max-width:860px){ .rail-logo{margin-bottom:0; margin-right:12px;} }
+  .rail-nav{display:flex; flex-direction:column; gap:6px; flex:1;}
+  @media (max-width:860px){ .rail-nav{flex-direction:row;} }
+  .rail-btn{
+    width:42px; height:42px; border-radius:13px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--text-muted); cursor:pointer; transition:all .15s ease;
   }
-
-  nav.nav{display:flex; flex-direction:column; gap:2px; padding:0 12px;}
-
-  .nav-item{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:11px 12px;
-    border-radius:9px;
-    border-left:3px solid transparent;
-    color:var(--text-muted);
-    font-size:13.5px;
-    font-weight:500;
-    cursor:pointer;
-    transition:background .15s ease, color .15s ease, border-color .15s ease;
-    user-select:none;
+  .rail-btn svg{width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:1.7;}
+  .rail-btn:hover{background:rgba(255,255,255,0.06); color:var(--text);}
+  .rail-btn.active{background:var(--lime); color:#12220a;}
+  .rail-foot{
+    width:8px; height:8px; border-radius:50%; background:var(--lime); margin-top:auto; flex-shrink:0;
+    box-shadow:0 0 10px rgba(166,226,46,0.7);
   }
-  .nav-item svg{width:17px; height:17px; flex-shrink:0; stroke:currentColor; fill:none; stroke-width:1.6;}
-  .nav-item:hover{background:var(--surface-alt); color:var(--text);}
-  .nav-item.active{
-    background:var(--surface-raised);
-    color:var(--amber);
-    border-left-color:var(--amber);
-  }
+  @media (max-width:860px){ .rail-foot{display:none;} }
 
-  .sidebar-foot{
-    margin-top:auto;
-    padding:16px 20px 20px;
-    font-family:var(--font-mono);
-    font-size:9.5px;
-    color:var(--text-faint);
-    letter-spacing:0.05em;
-    border-top:1px solid var(--border-soft);
-  }
-  .sidebar-foot .dot{color:var(--green); margin-right:5px;}
+  /* ---------------- Main ---------------- */
+  .main{flex:1; min-width:0; padding:28px 32px 60px; overflow-x:hidden;}
+  @media (max-width:640px){ .main{padding:20px 16px 44px;} }
 
-  /* ---------- Main ---------- */
-  .main{
-    flex:1;
-    min-width:0;
-    padding:36px 44px 60px;
-    max-width:1180px;
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:14px;}
+  .topbar-left{display:flex; align-items:center; gap:12px;}
+  .topbar-avatar{
+    width:38px; height:38px; border-radius:11px; background:var(--panel-bg-2);
+    border:1px solid var(--panel-border); display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:14px; color:var(--lime);
   }
+  .topbar-title{font-weight:700; font-size:15.5px;}
+  .topbar-sub{font-size:11.5px; color:var(--text-muted); margin-top:1px;}
+  .topbar-badge{
+    font-size:11px; font-weight:600; color:var(--text-muted);
+    background:var(--panel-bg-2); border:1px solid var(--panel-border);
+    padding:7px 13px; border-radius:20px; display:flex; align-items:center; gap:6px;
+  }
+  .topbar-badge .dot{width:6px; height:6px; border-radius:50%; background:var(--lime);}
 
   .page{display:none;}
-  .page.active{display:block; animation:fadein .25s ease;}
+  .page.active{display:block; animation:fadein .22s ease;}
   @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
 
-  .page-head{margin-bottom:28px;}
-  .eyebrow{
-    font-family:var(--font-mono);
-    font-size:10.5px;
-    letter-spacing:0.14em;
-    color:var(--teal);
-    text-transform:uppercase;
-    margin-bottom:6px;
-  }
-  h1.page-title{
-    font-family:var(--font-display);
-    font-size:27px;
-    font-weight:600;
-    letter-spacing:-0.01em;
-  }
-  .page-desc{color:var(--text-muted); font-size:13.5px; margin-top:6px; max-width:56ch;}
+  .page-head{margin-bottom:20px;}
+  .page-title{font-size:20px; font-weight:700;}
+  .page-desc{font-size:13px; color:var(--text-muted); margin-top:4px; max-width:56ch;}
 
-  /* ---------- Cards / Grid ---------- */
-  .card{
-    background:var(--surface);
-    border:1px solid var(--border-soft);
-    border-radius:14px;
-    padding:22px 24px;
+  .row-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .section-label{font-size:11.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-muted);}
+  .round-btn{
+    width:30px; height:30px; border-radius:50%; background:var(--panel-bg-2);
+    border:1px solid var(--panel-border); display:flex; align-items:center; justify-content:center;
+    color:var(--text-muted); cursor:pointer; transition:all .15s;
   }
+  .round-btn:hover{color:var(--text); border-color:rgba(255,255,255,0.2);}
+  .round-btn svg{width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2;}
 
-  .grid{display:grid; gap:18px;}
-  .grid-4{grid-template-columns:repeat(4, 1fr);}
-  .grid-2{grid-template-columns:1.15fr 0.85fr;}
-  @media (max-width:1000px){
-    .grid-4{grid-template-columns:repeat(2,1fr);}
-    .grid-2{grid-template-columns:1fr;}
-  }
-  @media (max-width:560px){
-    .grid-4{grid-template-columns:1fr;}
-  }
+  /* ---------------- Cards ---------------- */
+  .card{background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:18px; padding:20px 22px;}
 
-  /* ---------- Stat readouts ---------- */
-  .stat{
-    background:var(--surface);
-    border:1px solid var(--border-soft);
-    border-radius:14px;
-    padding:18px 20px;
-    position:relative;
-    overflow:hidden;
-  }
-  .stat .label{font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-faint);}
-  .stat .value{font-family:var(--font-mono); font-size:26px; font-weight:600; margin-top:8px; color:var(--text);}
-  .stat .value.amber{color:var(--amber);}
-  .stat .value.green{color:var(--green);}
-  .stat .value.teal{color:var(--teal);}
-  .stat::after{
-    content:"";
-    position:absolute; right:-10px; bottom:-10px;
-    width:70px; height:70px;
-    border:1px solid var(--border-soft);
-    border-radius:50%;
-    opacity:.5;
-  }
+  .grid{display:grid; gap:14px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-2{grid-template-columns:1fr 1fr;}
+  .grid-cols-2{grid-template-columns:1.15fr 0.85fr;}
+  @media (max-width:1000px){ .grid-4{grid-template-columns:repeat(2,1fr);} .grid-2{grid-template-columns:1fr;} .grid-cols-2{grid-template-columns:1fr;} }
+  @media (max-width:520px){ .grid-4{grid-template-columns:1fr;} }
 
-  .section-label{
-    font-family:var(--font-mono);
-    font-size:11px;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    color:var(--text-faint);
-    margin:30px 0 12px;
-  }
+  .stat-card{background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:16px; padding:16px 18px;}
+  .stat-card .label{font-size:10px; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); font-weight:600;}
+  .stat-card .value{font-size:21px; font-weight:700; margin-top:9px;}
+  .stat-bar{height:4px; border-radius:2px; background:rgba(255,255,255,0.08); margin-top:13px; overflow:hidden;}
+  .stat-bar-fill{height:100%; border-radius:2px; background:var(--lime); transition:width .4s ease;}
 
-  /* ---------- Tables ---------- */
-  table{width:100%; border-collapse:collapse; font-size:13px;}
+  /* ---------------- Activity dot grid ---------------- */
+  .activity-panel .panel-sub{font-size:11px; color:var(--text-faint); margin-top:2px;}
+  .activity-grid{display:grid; grid-template-columns:repeat(14,1fr); gap:5px; margin-top:16px;}
+  .activity-dot{aspect-ratio:1; border-radius:3px; background:rgba(255,255,255,0.055);}
+  .activity-dot.l1{background:rgba(166,226,46,0.35);}
+  .activity-dot.l2{background:rgba(166,226,46,0.65);}
+  .activity-dot.l3{background:var(--lime); box-shadow:0 0 7px rgba(166,226,46,0.55);}
+  .activity-legend{display:flex; align-items:center; gap:8px; margin-top:14px; font-size:10.5px; color:var(--text-faint);}
+  .activity-legend .sw{width:9px; height:9px; border-radius:2px;}
+
+  /* ---------------- Chart ---------------- */
+  .chart-legend{display:flex; gap:8px; flex-wrap:wrap;}
+  .pill{font-size:10px; font-weight:700; letter-spacing:0.02em; padding:4px 11px; border-radius:20px; display:inline-flex; align-items:center; gap:6px;}
+  .pill .sw{width:7px; height:7px; border-radius:50%;}
+  .chart-wrap{margin-top:16px;}
+  .chart-wrap svg{width:100%; height:140px; display:block;}
+  .chart-empty{font-size:12px; color:var(--text-faint); padding:30px 0; text-align:center;}
+
+  /* ---------------- Tables ---------------- */
+  .table-wrap{overflow-x:auto; margin-top:2px;}
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
   th{
-    text-align:left;
-    font-family:var(--font-mono);
-    font-size:10px;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    color:var(--text-faint);
-    padding:0 12px 10px;
-    border-bottom:1px solid var(--border-soft);
-    font-weight:500;
+    text-align:left; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; font-weight:700;
+    color:var(--text-muted); padding:0 12px 10px; border-bottom:1px solid var(--panel-border);
   }
-  td{
-    padding:11px 12px;
-    border-bottom:1px solid var(--border-soft);
-    color:var(--text);
-  }
+  td{padding:11px 12px; border-bottom:1px solid var(--panel-border); color:var(--text);}
   tr:last-child td{border-bottom:none;}
-  td.mono, th.mono{font-family:var(--font-mono);}
-  .empty-row td{color:var(--text-faint); text-align:center; padding:30px 12px; font-size:13px;}
-  .row-del{
-    background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:15px;
-    transition:color .15s;
-  }
-  .row-del:hover{color:var(--red);}
+  .empty-row td{color:var(--text-faint); text-align:center; padding:28px 12px; font-size:12.5px;}
+  .row-del{background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:14px;}
+  .row-del:hover{color:var(--coral);}
+  .pos{color:var(--lime);}
+  .neg{color:var(--coral);}
 
-  /* ---------- Forms ---------- */
-  label{
-    display:block;
-    font-family:var(--font-mono);
-    font-size:10.5px;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    color:var(--text-faint);
-    margin-bottom:6px;
-  }
+  /* ---------------- Forms ---------------- */
+  label{display:block; font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:7px;}
   .field{margin-bottom:16px;}
   input[type=text], input[type=number], select{
-    width:100%;
-    background:var(--bg-deep);
-    border:1px solid var(--border);
-    border-radius:8px;
-    padding:10px 12px;
-    color:var(--text);
-    font-family:var(--font-mono);
-    font-size:13.5px;
-    outline:none;
+    width:100%; background:var(--rail-bg); border:1px solid var(--panel-border); border-radius:12px;
+    padding:11px 14px; color:var(--text); font-family:var(--font); font-size:13.5px; outline:none;
     transition:border-color .15s ease, box-shadow .15s ease;
   }
-  input:focus, select:focus{
-    border-color:var(--amber);
-    box-shadow:0 0 0 3px rgba(245,166,35,0.14);
-  }
-  select{appearance:none; cursor:pointer;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238092AB'/></svg>");
-    background-repeat:no-repeat; background-position:right 12px center;
-  }
+  input:focus, select:focus{border-color:var(--lime); box-shadow:0 0 0 3px rgba(166,226,46,0.15);}
+  select{appearance:none; cursor:pointer; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238C8C90'/></svg>"); background-repeat:no-repeat; background-position:right 14px center;}
   .field-row{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
 
   .btn{
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    font-family:var(--font-body);
-    font-weight:600;
-    font-size:13.5px;
-    padding:11px 18px;
-    border-radius:9px;
-    border:1px solid var(--border);
-    background:var(--surface-alt);
-    color:var(--text);
-    cursor:pointer;
-    transition:all .15s ease;
+    font-weight:600; font-size:13px; padding:11px 18px; border-radius:12px;
+    border:1px solid var(--panel-border); background:var(--panel-bg-2); color:var(--text);
+    cursor:pointer; transition:all .15s;
   }
-  .btn:hover{background:var(--surface-raised); border-color:var(--text-faint);}
-  .btn-primary{background:var(--amber); border-color:var(--amber); color:#1a1200;}
-  .btn-primary:hover{background:#ffb840; border-color:#ffb840;}
+  .btn:hover{border-color:rgba(255,255,255,0.22);}
+  .btn-primary{background:var(--lime); color:#12220a; border-color:var(--lime); font-weight:700;}
+  .btn-primary:hover{filter:brightness(1.07);}
   .btn-ghost{background:transparent;}
-  .btn-danger{color:var(--red); border-color:var(--border);}
-  .btn-danger:hover{border-color:var(--red); background:rgba(240,98,95,0.08);}
-  .btn-sm{padding:7px 12px; font-size:12.5px; border-radius:7px;}
+  .btn-danger{color:var(--coral); border-color:var(--panel-border);}
+  .btn-danger:hover{border-color:var(--coral); background:rgba(255,107,91,0.08);}
+  .btn-sm{padding:8px 13px; font-size:12px;}
   .btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;}
 
   .chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;}
   .chip{
-    font-family:var(--font-mono); font-size:11px; padding:5px 10px;
-    border:1px solid var(--border); border-radius:20px; color:var(--text-muted);
-    cursor:pointer; background:var(--bg-deep); transition:all .15s;
+    font-size:11px; font-weight:600; padding:6px 12px; border-radius:20px;
+    border:1px solid var(--panel-border); color:var(--text-muted); cursor:pointer; background:var(--panel-bg-2);
+    transition:all .15s;
   }
-  .chip:hover{border-color:var(--teal); color:var(--teal);}
+  .chip:hover{border-color:var(--lime); color:var(--lime);}
 
-  /* ---------- Spool visualization (signature element) ---------- */
-  .spool-wrap{
-    display:flex; flex-direction:column; align-items:center;
-    padding:20px 10px 4px;
+  /* ---------------- Hero stat (sell price) ---------------- */
+  .hero-stat{
+    border:1px solid rgba(166,226,46,0.3);
+    background:linear-gradient(160deg, rgba(166,226,46,0.09), rgba(166,226,46,0.015));
+    border-radius:18px; padding:24px; text-align:center;
   }
-  .spool{
-    width:200px; height:200px;
-    border-radius:50%;
-    position:relative;
-    background:
-      conic-gradient(
-        var(--amber) 0% var(--a1),
-        var(--teal) var(--a1) calc(var(--a1) + var(--a2)),
-        #6C7CE0 calc(var(--a1) + var(--a2)) calc(var(--a1) + var(--a2) + var(--a3)),
-        var(--border) calc(var(--a1) + var(--a2) + var(--a3)) 100%
-      );
-    transition:--a1 .5s ease, --a2 .5s ease, --a3 .5s ease;
-    box-shadow:inset 0 0 0 1px var(--border-soft), 0 0 34px -12px rgba(245,166,35,0.35);
-  }
-  .spool::before{
-    content:"";
-    position:absolute; inset:0;
-    border-radius:50%;
-    background:repeating-conic-gradient(rgba(0,0,0,0.16) 0deg 1deg, transparent 1deg 6deg);
-    opacity:0.5;
-    pointer-events:none;
-  }
-  .spool-hole{
-    position:absolute; inset:28px;
-    border-radius:50%;
-    background:var(--surface);
-    box-shadow:inset 0 0 0 2px var(--border-soft), inset 0 0 22px rgba(0,0,0,0.35);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-  }
-  .spool-hole .total-label{font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.1em; color:var(--text-faint); text-transform:uppercase;}
-  .spool-hole .total-value{font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--text); margin-top:3px;}
-  .spool-hole .total-margin{font-family:var(--font-mono); font-size:11px; margin-top:4px;}
+  .hero-stat .h-label{font-size:11px; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-muted); font-weight:700;}
+  .hero-stat .h-value{font-size:32px; font-weight:800; margin-top:6px;}
+  .hero-stat .h-sub{font-size:11.5px; color:var(--text-muted); margin-top:8px;}
 
-  .spool-legend{display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin-top:18px;}
-  .legend-item{display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:11.5px; color:var(--text-muted);}
-  .swatch{width:9px; height:9px; border-radius:2px; flex-shrink:0;}
+  .cost-list{margin-top:16px;}
+  .cost-row{display:flex; justify-content:space-between; padding:9px 0; font-size:12.5px; border-bottom:1px solid var(--panel-border);}
+  .cost-row:last-child{border-bottom:none;}
+  .cost-row span:first-child{color:var(--text-muted);}
+  .cost-row span:last-child{font-weight:600;}
 
-  .cost-breakdown{margin-top:22px; border-top:1px solid var(--border-soft); padding-top:16px;}
-  .cost-line{display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:12.5px; padding:5px 0; color:var(--text-muted);}
-  .cost-line b{color:var(--text); font-weight:500;}
-  .cost-line.total{border-top:1px solid var(--border-soft); margin-top:6px; padding-top:10px; font-size:14px; color:var(--text);}
-  .cost-line.profit b{color:var(--green);}
-  .cost-line.profit.neg b{color:var(--red);}
-
-  /* ---------- Dropzone ---------- */
+  /* ---------------- Dropzone / viewer ---------------- */
   .dropzone{
-    border:1.5px dashed var(--border);
-    border-radius:14px;
-    padding:44px 20px;
-    text-align:center;
-    cursor:pointer;
-    transition:border-color .15s, background .15s;
-    background:var(--bg-deep);
+    border:1.5px dashed var(--panel-border); border-radius:16px; padding:28px 18px; text-align:center;
+    cursor:pointer; transition:all .15s; background:var(--rail-bg);
   }
-  .dropzone.drag{border-color:var(--amber); background:rgba(245,166,35,0.06);}
-  .dropzone svg{width:34px; height:34px; stroke:var(--text-faint); margin-bottom:12px;}
-  .dropzone .dz-title{font-weight:600; font-size:14px;}
-  .dropzone .dz-sub{color:var(--text-faint); font-size:12px; margin-top:4px; font-family:var(--font-mono);}
+  .dropzone.drag{border-color:var(--lime); background:rgba(166,226,46,0.05);}
+  .dropzone svg{width:24px; height:24px; stroke:var(--text-faint); margin-bottom:10px;}
+  .dropzone .dz-title{font-weight:700; font-size:13px;}
+  .dropzone .dz-sub{color:var(--text-faint); font-size:11.5px; margin-top:4px;}
 
-  .viewer-card{
-    margin-top:20px;
-    border:1px solid var(--border-soft);
-    border-radius:14px;
-    background:var(--bg-deep);
-    position:relative;
-    overflow:hidden;
-  }
-  .viewer-toolbar{
-    position:absolute; top:10px; left:12px; right:12px;
-    display:flex; justify-content:space-between; align-items:center;
-    z-index:5; pointer-events:none;
-  }
-  .viewer-toolbar .vt-label{
-    font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
-    color:var(--text-faint); background:rgba(10,18,29,0.6); padding:4px 8px; border-radius:6px;
-  }
+  .viewer-card{margin-top:16px; border-radius:16px; border:1px solid var(--panel-border); background:var(--rail-bg); position:relative; overflow:hidden;}
+  .viewer-toolbar{position:absolute; top:10px; left:12px; right:12px; display:flex; justify-content:space-between; z-index:5; pointer-events:none;}
+  .viewer-toolbar .vt-label{font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-muted); background:rgba(20,20,22,0.7); padding:4px 9px; border-radius:8px;}
   .viewer-toolbar .vt-actions{display:flex; gap:6px; pointer-events:auto;}
-  .vt-btn{
-    font-family:var(--font-mono); font-size:10.5px; padding:5px 9px;
-    background:rgba(20,35,53,0.85); border:1px solid var(--border); color:var(--text-muted);
-    border-radius:6px; cursor:pointer; transition:all .15s;
-  }
-  .vt-btn:hover{color:var(--text); border-color:var(--text-faint);}
-  .vt-btn.on{color:var(--amber); border-color:var(--amber-dim);}
-  .viewer-canvas-wrap{width:100%; height:280px; position:relative; cursor:grab;}
+  .vt-btn{font-size:10.5px; font-weight:600; padding:5px 10px; background:rgba(37,37,40,0.9); border:1px solid var(--panel-border); color:var(--text-muted); border-radius:8px; cursor:pointer; transition:all .15s;}
+  .vt-btn:hover{color:var(--text);}
+  .vt-btn.on{color:var(--lime); border-color:rgba(166,226,46,0.4);}
+  .viewer-canvas-wrap{width:100%; height:250px; position:relative; cursor:grab;}
   .viewer-canvas-wrap:active{cursor:grabbing;}
   .viewer-canvas-wrap canvas{display:block; width:100%; height:100%;}
-  .viewer-empty{
-    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:8px; color:var(--text-faint); font-family:var(--font-mono); font-size:11.5px; pointer-events:none;
-  }
-  .viewer-empty svg{width:26px; height:26px; stroke:var(--text-faint); opacity:.6;}
-  .viewer-hint{
-    position:absolute; bottom:10px; right:12px; z-index:5;
-    font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint);
-    background:rgba(10,18,29,0.6); padding:3px 8px; border-radius:6px;
-  }
-
-  .mesh-stats{margin-top:20px; display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
-  .mesh-stat{background:var(--bg-deep); border:1px solid var(--border-soft); border-radius:10px; padding:12px 14px;}
-  .mesh-stat .l{font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-faint);}
-  .mesh-stat .v{font-family:var(--font-mono); font-size:16px; margin-top:4px; color:var(--teal);}
+  .viewer-empty{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--text-faint); font-size:11.5px; pointer-events:none; text-align:center; padding:0 30px;}
+  .viewer-empty svg{width:24px; height:24px; stroke:var(--text-faint); opacity:.7;}
+  .viewer-hint{position:absolute; bottom:10px; right:12px; z-index:5; font-size:9.5px; color:var(--text-faint); background:rgba(20,20,22,0.7); padding:3px 9px; border-radius:8px;}
 
   .slider-row{display:flex; align-items:center; gap:12px;}
-  input[type=range]{flex:1; accent-color:var(--amber);}
+  input[type=range]{flex:1; accent-color:var(--lime);}
 
-  /* ---------- Toast ---------- */
+  /* ---------------- Filament cards ---------------- */
+  .filament-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;}
+  .filament-card{background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:14px; padding:14px 14px 12px; position:relative; overflow:hidden;}
+  .filament-card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px;}
+  .filament-card .fc-del{position:absolute; top:8px; right:10px; background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:12px;}
+  .filament-card .fc-del:hover{color:var(--coral);}
+  .filament-card input{font-size:12.5px; padding:7px 9px; margin-top:2px;}
+  .filament-card label{font-size:9.5px; margin-bottom:3px;}
+  .filament-card .fc-name{margin-bottom:10px;}
+  .add-filament-card{
+    border:1.5px dashed var(--panel-border); border-radius:14px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-weight:700; font-size:12px; color:var(--text-muted); min-height:118px; transition:all .15s;
+  }
+  .add-filament-card:hover{border-color:var(--lime); color:var(--lime);}
+
+  /* ---------------- Toast ---------------- */
   .toast{
-    position:fixed; bottom:24px; right:24px;
-    background:var(--surface-raised); border:1px solid var(--border);
-    padding:11px 18px; border-radius:10px;
-    font-family:var(--font-mono); font-size:12.5px;
-    display:flex; align-items:center; gap:8px;
-    box-shadow:0 10px 30px -8px rgba(0,0,0,0.5);
-    transform:translateY(16px); opacity:0; pointer-events:none;
-    transition:all .25s ease;
-    z-index:200;
+    position:fixed; bottom:22px; right:22px; background:var(--panel-bg-2); border:1px solid var(--panel-border);
+    padding:11px 17px; border-radius:12px; font-size:12.5px; display:flex; align-items:center; gap:8px;
+    box-shadow:0 12px 30px -10px rgba(0,0,0,0.5); transform:translateY(14px); opacity:0; pointer-events:none;
+    transition:all .22s ease; z-index:200;
   }
   .toast.show{transform:none; opacity:1;}
-  .toast .dot{width:7px; height:7px; border-radius:50%; background:var(--green);}
+  .toast .dot{width:7px; height:7px; border-radius:50%; background:var(--lime);}
 
-  /* ---------- Settings filament table ---------- */
-  .fil-row input{padding:8px 10px; font-size:12.5px;}
-  .fil-row td{padding:7px 8px;}
-
-  /* ---------- Quote overlay ---------- */
+  /* ---------------- Quote overlay ---------------- */
   .quote-overlay{
-    position:fixed; inset:0; background:rgba(6,10,16,0.75);
-    display:none; align-items:flex-start; justify-content:center;
-    padding:50px 20px; overflow:auto; z-index:150; backdrop-filter:blur(3px);
+    position:fixed; inset:0; background:rgba(10,10,10,0.6); display:none; align-items:flex-start;
+    justify-content:center; padding:50px 18px; overflow:auto; z-index:150; backdrop-filter:blur(3px);
   }
   .quote-overlay.show{display:flex;}
-  .quote-sheet{
-    background:#F6F3EC; color:#1A1B1E; width:100%; max-width:640px;
-    border-radius:10px; padding:44px 46px; font-family:var(--font-body);
-    box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
-  }
-  .quote-sheet h2{font-family:var(--font-display); font-size:22px;}
-  .quote-top{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #1A1B1E; padding-bottom:16px; margin-bottom:20px;}
-  .quote-mark{width:38px; height:38px; border-radius:8px; background:#1A1B1E; color:#F5A623; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700;}
-  .quote-meta{text-align:right; font-family:var(--font-mono); font-size:11.5px; color:#555;}
-  .quote-row{display:flex; justify-content:space-between; padding:7px 0; font-size:13.5px; border-bottom:1px solid #ddd6c7;}
-  .quote-row.total{font-weight:700; font-size:17px; border-bottom:none; border-top:2px solid #1A1B1E; margin-top:8px; padding-top:12px;}
-  .quote-foot{margin-top:26px; font-size:11.5px; color:#777; line-height:1.5;}
-  .quote-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:22px;}
-  .quote-actions .btn{border-radius:8px;}
+  .quote-sheet{background:#F7F5F0; color:#191919; width:100%; max-width:600px; padding:40px 42px 34px; border-radius:20px; box-shadow:0 30px 60px -18px rgba(0,0,0,0.5);}
+  .quote-top{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #191919; padding-bottom:14px; margin-bottom:18px;}
+  .quote-mark{width:38px; height:38px; border-radius:11px; background:linear-gradient(150deg, var(--violet), #5B4FCF); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;}
+  .quote-top h2{font-size:19px; font-weight:800;}
+  .quote-top .sub{font-size:11px; color:#666; margin-top:2px;}
+  .quote-meta{text-align:right; font-size:11px; color:#666;}
+  .quote-name{font-weight:700; font-size:15px; margin-bottom:12px;}
+  .quote-row{display:flex; justify-content:space-between; padding:7px 0; font-size:13px; border-bottom:1px solid #e3ddcd;}
+  .quote-row.total{font-weight:800; font-size:16px; border-bottom:none; border-top:2px solid #191919; margin-top:8px; padding-top:12px; color:#4a7a1f;}
+  .quote-foot{margin-top:22px; font-size:11px; color:#888; line-height:1.6;}
+  .quote-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
+  .quote-actions .btn{border-radius:11px;}
 
   @media print{
     body *{visibility:hidden;}
     .quote-sheet, .quote-sheet *{visibility:visible;}
-    .quote-sheet{position:absolute; top:0; left:0; box-shadow:none; width:100%; max-width:none;}
+    .quote-sheet{position:absolute; top:0; left:0; box-shadow:none; width:100%; max-width:none; border-radius:0;}
     .quote-actions{display:none;}
-  }
-
-  /* ---------- Responsive ---------- */
-  @media (max-width:860px){
-    body{flex-direction:column;}
-    .sidebar{
-      width:100%; height:auto; position:sticky; top:0;
-      flex-direction:row; align-items:center; border-right:none;
-      border-bottom:1px solid var(--border-soft); z-index:50;
-      overflow-x:auto;
-    }
-    .brand{padding:14px 16px;}
-    .hazard{display:none;}
-    nav.nav{flex-direction:row; padding:6px 10px;}
-    .nav-item{white-space:nowrap;}
-    .nav-item span{display:none;}
-    .sidebar-foot{display:none;}
-    .main{padding:26px 18px 60px;}
   }
 </style>
 </head>
 <body>
 
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark">R</div>
-      <div class="brand-text">
-        <div class="name">R PRINTS</div>
-        <div class="sub">Print Ops Console</div>
-      </div>
-    </div>
-    <div class="hazard"></div>
-    <nav class="nav" id="nav">
-      <div class="nav-item active" data-page="dashboard">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-        <span>Dashboard</span>
-      </div>
-      <div class="nav-item" data-page="calculator">
-        <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="7" y1="11" x2="7" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="17" y1="11" x2="17" y2="11"/><line x1="7" y1="15" x2="7" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="17" y1="15" x2="17" y2="19"/><line x1="7" y1="19" x2="7" y2="19"/><line x1="12" y1="19" x2="12" y2="19"/></svg>
-        <span>Calculator</span>
-      </div>
-      <div class="nav-item" data-page="upload">
-        <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
-        <span>STL Upload</span>
-      </div>
-      <div class="nav-item" data-page="history">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
-        <span>History</span>
-      </div>
-      <div class="nav-item" data-page="settings">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span>Settings</span>
-      </div>
-    </nav>
-    <div class="sidebar-foot"><span class="dot">●</span>SYSTEM READY</div>
-  </aside>
+  <div class="app-shell">
+    <aside class="rail">
+      <div class="rail-logo">R</div>
+      <nav class="rail-nav" id="nav">
+        <div class="rail-btn active" data-page="dashboard" title="Dashboard">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        </div>
+        <div class="rail-btn" data-page="calculator" title="Calculator">
+          <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="7" y1="11" x2="7" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="17" y1="11" x2="17" y2="11"/><line x1="7" y1="15" x2="7" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="17" y1="15" x2="17" y2="19"/><line x1="7" y1="19" x2="7" y2="19"/><line x1="12" y1="19" x2="12" y2="19"/></svg>
+        </div>
+        <div class="rail-btn" data-page="upload" title="STL Upload">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        </div>
+        <div class="rail-btn" data-page="history" title="History">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+        </div>
+        <div class="rail-btn" data-page="settings" title="Settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </div>
+      </nav>
+      <div class="rail-foot"></div>
+    </aside>
 
-  <main class="main">
-
-    <!-- DASHBOARD -->
-    <section class="page active" id="page-dashboard">
-      <div class="page-head">
-        <div class="eyebrow">Overview</div>
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-desc">Live readout of everything logged through the calculator.</p>
-      </div>
-
-      <div class="grid grid-4">
-        <div class="stat"><div class="label">Prints Logged</div><div class="value" id="stat-count">0</div></div>
-        <div class="stat"><div class="label">Total Revenue</div><div class="value teal" id="stat-revenue">£0.00</div></div>
-        <div class="stat"><div class="label">Total Profit</div><div class="value green" id="stat-profit">£0.00</div></div>
-        <div class="stat"><div class="label">Avg. Margin</div><div class="value amber" id="stat-margin">0%</div></div>
-      </div>
-
-      <div class="section-label">Recent Prints</div>
-      <div class="card" style="padding:8px 12px;">
-        <table>
-          <thead><tr><th>Name</th><th>Date</th><th class="mono">Weight</th><th class="mono">Cost</th><th class="mono">Sell</th><th class="mono">Profit</th></tr></thead>
-          <tbody id="recent-body"><tr class="empty-row"><td colspan="6">No prints yet. Head to the Calculator to price your first job.</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- CALCULATOR -->
-    <section class="page" id="page-calculator">
-      <div class="page-head">
-        <div class="eyebrow">Price a Job</div>
-        <h1 class="page-title">Calculator</h1>
-        <p class="page-desc">Enter the print specs — cost, profit and margin update as you type.</p>
-      </div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="field">
-            <label>Print Name</label>
-            <input type="text" id="in-name" placeholder="e.g. Articulated Dragon">
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Filament</label>
-              <select id="in-filament"></select>
-            </div>
-            <div class="field">
-              <label>Price (£/kg)</label>
-              <input type="number" id="in-price" step="0.01" min="0">
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Weight (g)</label>
-              <input type="number" id="in-weight" step="0.1" min="0" value="0">
-            </div>
-            <div class="field">
-              <label>Extras (£)</label>
-              <input type="number" id="in-extras" step="0.01" min="0" value="0">
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Print Hours</label>
-              <input type="number" id="in-hours" min="0" value="0">
-            </div>
-            <div class="field">
-              <label>Minutes</label>
-              <input type="number" id="in-minutes" min="0" max="59" value="0">
-            </div>
-          </div>
-          <div class="field">
-            <label>Sell Price (£)</label>
-            <input type="number" id="in-sell" step="0.01" min="0" value="0">
-            <div class="chip-row">
-              <span class="chip" data-margin="20">Suggest @ 20%</span>
-              <span class="chip" data-margin="35">Suggest @ 35%</span>
-              <span class="chip" data-margin="50">Suggest @ 50%</span>
-            </div>
-          </div>
-
-          <div class="btn-row">
-            <button class="btn btn-primary" id="btn-save">Save to History</button>
-            <button class="btn" id="btn-quote">Generate Quote</button>
-            <button class="btn btn-ghost" id="btn-reset">Reset</button>
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-avatar">R</div>
+          <div>
+            <div class="topbar-title">R Prints</div>
+            <div class="topbar-sub">3D Print Pricing Console</div>
           </div>
         </div>
+        <div class="topbar-badge"><span class="dot"></span><span id="header-date">—</span></div>
+      </div>
 
-        <div class="card">
-          <div class="spool-wrap">
-            <div class="spool" id="spool">
-              <div class="spool-hole">
-                <div class="total-label">Total Cost</div>
-                <div class="total-value" id="spool-total">£0.00</div>
-                <div class="total-margin" id="spool-margin">— margin</div>
+      <!-- DASHBOARD -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-head">
+          <div class="page-title">Dashboard</div>
+          <div class="page-desc">A live readout of everything priced and logged.</div>
+        </div>
+
+        <div class="row-head">
+          <div class="section-label">Overview</div>
+          <div class="round-btn" id="btn-view-history" title="View history"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+        </div>
+        <div class="grid grid-4">
+          <div class="stat-card"><div class="label">Prints Logged</div><div class="value" id="stat-count">0</div><div class="stat-bar"><div class="stat-bar-fill" id="bar-count" style="width:0%"></div></div></div>
+          <div class="stat-card"><div class="label">Total Revenue</div><div class="value" id="stat-revenue">£0.00</div><div class="stat-bar"><div class="stat-bar-fill" id="bar-revenue" style="width:0%"></div></div></div>
+          <div class="stat-card"><div class="label">Total Profit</div><div class="value" id="stat-profit">£0.00</div><div class="stat-bar"><div class="stat-bar-fill" id="bar-profit" style="width:0%"></div></div></div>
+          <div class="stat-card"><div class="label">Avg. Margin</div><div class="value" id="stat-margin">0%</div><div class="stat-bar"><div class="stat-bar-fill" id="bar-margin" style="width:0%"></div></div></div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top:16px;">
+          <div class="card activity-panel">
+            <div class="section-label">Print Activity</div>
+            <div class="panel-sub">Last 70 days — darker means more prints logged that day</div>
+            <div class="activity-grid" id="activity-grid"></div>
+            <div class="activity-legend">
+              <span>Less</span>
+              <span class="sw" style="background:rgba(255,255,255,0.055)"></span>
+              <span class="sw" style="background:rgba(166,226,46,0.35)"></span>
+              <span class="sw" style="background:rgba(166,226,46,0.65)"></span>
+              <span class="sw" style="background:var(--lime)"></span>
+              <span>More</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row-head" style="margin-bottom:2px;">
+              <div class="section-label">Revenue &amp; Profit</div>
+              <div class="chart-legend">
+                <span class="pill" style="background:rgba(166,226,46,0.15); color:var(--lime);"><span class="sw" style="background:var(--lime)"></span>Revenue</span>
+                <span class="pill" style="background:rgba(139,124,246,0.15); color:var(--violet);"><span class="sw" style="background:var(--violet)"></span>Profit</span>
               </div>
             </div>
-            <div class="spool-legend">
-              <div class="legend-item"><span class="swatch" style="background:var(--amber)"></span>Material</div>
-              <div class="legend-item"><span class="swatch" style="background:var(--teal)"></span>Time</div>
-              <div class="legend-item"><span class="swatch" style="background:#6C7CE0"></span>Base + Extras</div>
-            </div>
-          </div>
-
-          <div class="cost-breakdown">
-            <div class="cost-line"><span>Material Cost</span><b id="c-material">£0.00</b></div>
-            <div class="cost-line"><span>Time Cost</span><b id="c-time">£0.00</b></div>
-            <div class="cost-line"><span>Base Fee</span><b id="c-base">£0.00</b></div>
-            <div class="cost-line"><span>Extras</span><b id="c-extras">£0.00</b></div>
-            <div class="cost-line total"><span>Total Cost</span><b id="c-total">£0.00</b></div>
-            <div class="cost-line profit"><span>Profit</span><b id="c-profit">£0.00</b></div>
+            <div class="chart-wrap" id="chart-wrap"></div>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- STL UPLOAD -->
-    <section class="page" id="page-upload">
-      <div class="page-head">
-        <div class="eyebrow">Mesh Analysis</div>
-        <h1 class="page-title">STL Upload</h1>
-        <p class="page-desc">Drop in an STL to estimate volume and weight, then send it straight to the calculator.</p>
-      </div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="dropzone" id="dropzone">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
-            <div class="dz-title">Drag &amp; drop an STL file</div>
-            <div class="dz-sub">or click to browse — .stl (binary or ASCII)</div>
-            <input type="file" id="file-input" accept=".stl" style="display:none">
+        <div class="section-label" style="margin-top:24px;">Recent Prints</div>
+        <div class="card" style="padding:10px 14px; margin-top:10px;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Date</th><th>Weight</th><th>Cost</th><th>Sell</th><th>Profit</th></tr></thead>
+              <tbody id="recent-body"><tr class="empty-row"><td colspan="6">No prints yet. Head to the Calculator to price your first job.</td></tr></tbody>
+            </table>
           </div>
+        </div>
+      </section>
 
-          <div class="viewer-card">
-            <div class="viewer-toolbar">
-              <span class="vt-label">3D Preview</span>
-              <div class="vt-actions">
-                <button class="vt-btn" id="vt-wireframe">Wireframe</button>
-                <button class="vt-btn" id="vt-reset">Reset View</button>
+      <!-- CALCULATOR -->
+      <section class="page" id="page-calculator">
+        <div class="page-head">
+          <div class="page-title">Calculator</div>
+          <div class="page-desc">Enter the print specs — cost and margin update live.</div>
+        </div>
+
+        <div class="grid grid-cols-2">
+          <div class="card">
+            <div class="field">
+              <label>Print Name</label>
+              <input type="text" id="in-name" placeholder="e.g. Articulated Dragon">
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Filament</label><select id="in-filament"></select></div>
+              <div class="field"><label>Price (£/kg)</label><input type="number" id="in-price" step="0.01" min="0"></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Weight (g)</label><input type="number" id="in-weight" step="0.1" min="0" value="0"></div>
+              <div class="field"><label>Extras (£)</label><input type="number" id="in-extras" step="0.01" min="0" value="0"></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Print Hours</label><input type="number" id="in-hours" min="0" value="0"></div>
+              <div class="field"><label>Minutes</label><input type="number" id="in-minutes" min="0" max="59" value="0"></div>
+            </div>
+            <div class="field">
+              <label>Sell Price (£)</label>
+              <input type="number" id="in-sell" step="0.01" min="0" value="0">
+              <div class="chip-row">
+                <span class="chip" data-margin="20">Suggest @ 20%</span>
+                <span class="chip" data-margin="35">Suggest @ 35%</span>
+                <span class="chip" data-margin="50">Suggest @ 50%</span>
               </div>
             </div>
-            <div class="viewer-canvas-wrap" id="viewer-wrap">
-              <canvas id="viewer-canvas"></canvas>
-              <div class="viewer-empty" id="viewer-empty">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
-                <span>Model preview appears here</span>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btn-save">Save to History</button>
+              <button class="btn" id="btn-quote">Generate Quote</button>
+              <button class="btn btn-ghost" id="btn-reset">Reset</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="hero-stat">
+              <div class="h-label">Sell Price</div>
+              <div class="h-value" id="hero-total">£0.00</div>
+              <div class="h-sub" id="hero-margin">no sell price set</div>
+            </div>
+            <div class="card" style="margin-top:14px;">
+              <div class="section-label" style="margin:0 0 4px;">Cost Breakdown</div>
+              <div class="cost-list">
+                <div class="cost-row"><span>Material Cost</span><span id="c-material">£0.00</span></div>
+                <div class="cost-row"><span>Time Cost</span><span id="c-time">£0.00</span></div>
+                <div class="cost-row"><span>Base Fee</span><span id="c-base">£0.00</span></div>
+                <div class="cost-row"><span>Extras</span><span id="c-extras">£0.00</span></div>
+                <div class="cost-row"><span>Total Cost</span><span id="c-total">£0.00</span></div>
+                <div class="cost-row"><span>Profit</span><span id="c-profit">£0.00</span></div>
               </div>
             </div>
-            <div class="viewer-hint" id="viewer-hint" style="display:none;">Drag to orbit · scroll to zoom</div>
           </div>
+        </div>
+      </section>
 
-          <div class="field" style="margin-top:20px;">
-            <label>Effective Density Factor — accounts for shells + infill, not solid fill</label>
-            <div class="slider-row">
-              <input type="range" id="infill" min="5" max="100" value="30">
-              <span class="chip" id="infill-val" style="cursor:default;">30%</span>
+      <!-- STL UPLOAD -->
+      <section class="page" id="page-upload">
+        <div class="page-head">
+          <div class="page-title">STL Upload</div>
+          <div class="page-desc">Drop in an STL to estimate volume and weight, then send it to the calculator.</div>
+        </div>
+
+        <div class="grid grid-cols-2">
+          <div class="card">
+            <div class="dropzone" id="dropzone">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+              <div class="dz-title">Drag &amp; drop an STL file</div>
+              <div class="dz-sub">or click to browse — binary or ASCII</div>
+              <input type="file" id="file-input" accept=".stl" style="display:none">
+            </div>
+
+            <div class="viewer-card">
+              <div class="viewer-toolbar">
+                <span class="vt-label">3D Preview</span>
+                <div class="vt-actions">
+                  <button class="vt-btn" id="vt-wireframe">Wireframe</button>
+                  <button class="vt-btn" id="vt-reset">Reset</button>
+                </div>
+              </div>
+              <div class="viewer-canvas-wrap" id="viewer-wrap">
+                <canvas id="viewer-canvas"></canvas>
+                <div class="viewer-empty" id="viewer-empty">
+                  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><path d="M12 22.08V12"/></svg>
+                  <span>Model preview appears here</span>
+                </div>
+              </div>
+              <div class="viewer-hint" id="viewer-hint" style="display:none;">Drag to orbit · scroll to zoom</div>
+            </div>
+
+            <div class="field" style="margin-top:18px;">
+              <label>Effective Density Factor — shells + infill, not solid fill</label>
+              <div class="slider-row">
+                <input type="range" id="infill" min="5" max="100" value="30">
+                <span class="chip" id="infill-val" style="cursor:default;">30%</span>
+              </div>
             </div>
           </div>
 
-          <div class="field">
-            <label>Filament for Estimate</label>
-            <select id="stl-filament"></select>
-          </div>
-
-          <div class="mesh-stats">
-            <div class="mesh-stat"><div class="l">Triangles</div><div class="v" id="m-tris">—</div></div>
-            <div class="mesh-stat"><div class="l">Bounding Box (mm)</div><div class="v" id="m-bbox">—</div></div>
-            <div class="mesh-stat"><div class="l">Volume</div><div class="v" id="m-vol">— cm³</div></div>
-            <div class="mesh-stat"><div class="l">Est. Weight</div><div class="v" id="m-weight">— g</div></div>
-          </div>
-
-          <div class="btn-row">
-            <button class="btn btn-primary" id="btn-send-calc" disabled>Send to Calculator</button>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="section-label" style="margin-top:0;">How the estimate works</div>
-          <p style="color:var(--text-muted); font-size:13.5px; line-height:1.7;">
-            The parser reads the mesh's triangles directly from the file and sums signed tetrahedron
-            volumes to get the true enclosed solid volume — the same math a slicer uses internally.
-            Since real prints aren't solid, that volume is scaled by the density factor on the left
-            to approximate shells + infill. Push it toward 100% for solid or high-infill parts, and
-            down toward 15–25% for typical hollow decorative prints.
-          </p>
-          <div class="section-label">Currently loaded</div>
-          <p style="font-family:var(--font-mono); font-size:12.5px; color:var(--text-faint);" id="loaded-file">No file loaded.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- HISTORY -->
-    <section class="page" id="page-history">
-      <div class="page-head">
-        <div class="eyebrow"><span id="hist-count">0</span> Prints</div>
-        <h1 class="page-title">Print Log</h1>
-        <p class="page-desc">Everything you've saved from the calculator.</p>
-      </div>
-      <div class="btn-row" style="margin-top:0; margin-bottom:16px;">
-        <button class="btn btn-danger btn-sm" id="btn-clear-history">Clear All</button>
-      </div>
-      <div class="card" style="padding:8px 12px;">
-        <table>
-          <thead><tr><th>Name</th><th>Date</th><th class="mono">Weight</th><th class="mono">Time</th><th class="mono">Cost</th><th class="mono">Sell</th><th class="mono">Profit</th><th class="mono">Margin</th><th></th></tr></thead>
-          <tbody id="history-body"><tr class="empty-row"><td colspan="9">No prints yet. Use the calculator to add one.</td></tr></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- SETTINGS -->
-    <section class="page" id="page-settings">
-      <div class="page-head">
-        <div class="eyebrow">Configuration</div>
-        <h1 class="page-title">Settings</h1>
-        <p class="page-desc">Rates used across every calculation, plus your filament library.</p>
-      </div>
-
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="section-label" style="margin-top:0;">Pricing Rates</div>
-          <div class="field">
-            <label>£ per Hour (printer time)</label>
-            <input type="number" id="set-hourrate" step="0.01" min="0">
-          </div>
-          <div class="field">
-            <label>Base Fee (£) — flat fee per print</label>
-            <input type="number" id="set-basefee" step="0.01" min="0">
-          </div>
-          <div class="field">
-            <label>Default Margin % (used for quick-suggest)</label>
-            <input type="number" id="set-margin" step="1" min="0">
+          <div>
+            <div class="card">
+              <div class="field">
+                <label>Filament for Estimate</label>
+                <select id="stl-filament"></select>
+              </div>
+              <div class="section-label" style="margin-top:20px;">Mesh Stats</div>
+              <div class="cost-list">
+                <div class="cost-row"><span>Triangles</span><span id="m-tris">—</span></div>
+                <div class="cost-row"><span>Bounding Box (mm)</span><span id="m-bbox">—</span></div>
+                <div class="cost-row"><span>Volume</span><span id="m-vol">— cm³</span></div>
+                <div class="cost-row"><span>Est. Weight</span><span id="m-weight">— g</span></div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" id="btn-send-calc" disabled>Send to Calculator</button>
+              </div>
+            </div>
+            <div class="card" style="margin-top:14px;">
+              <div class="section-label" style="margin-top:0;">Currently Loaded</div>
+              <p style="font-size:12px; color:var(--text-faint);" id="loaded-file">No file loaded.</p>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="card">
-          <div class="section-label" style="margin-top:0;">Filament Library</div>
-          <table>
-            <thead><tr><th>Name</th><th class="mono">£/kg</th><th class="mono">g/cm³</th><th></th></tr></thead>
-            <tbody id="filament-body"></tbody>
-          </table>
-          <div class="btn-row">
-            <button class="btn btn-sm" id="btn-add-filament">+ Add Filament</button>
+      <!-- HISTORY -->
+      <section class="page" id="page-history">
+        <div class="page-head">
+          <div class="page-title">History</div>
+          <div class="page-desc"><span id="hist-count">0</span> prints saved.</div>
+        </div>
+        <div class="btn-row" style="margin-top:0; margin-bottom:16px;">
+          <button class="btn btn-danger btn-sm" id="btn-clear-history">Clear All</button>
+        </div>
+        <div class="card" style="padding:10px 14px;">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Date</th><th>Weight</th><th>Time</th><th>Cost</th><th>Sell</th><th>Profit</th><th>Margin</th><th></th></tr></thead>
+              <tbody id="history-body"><tr class="empty-row"><td colspan="9">No prints yet. Use the calculator to add one.</td></tr></tbody>
+            </table>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-  </main>
+      <!-- SETTINGS -->
+      <section class="page" id="page-settings">
+        <div class="page-head">
+          <div class="page-title">Settings</div>
+          <div class="page-desc">Rates used across every calculation, plus your filament library.</div>
+        </div>
+
+        <div class="grid grid-cols-2">
+          <div class="card">
+            <div class="section-label" style="margin-top:0;">Pricing Rates</div>
+            <div class="field"><label>£ per Hour (printer time)</label><input type="number" id="set-hourrate" step="0.01" min="0"></div>
+            <div class="field"><label>Base Fee (£) — flat fee per print</label><input type="number" id="set-basefee" step="0.01" min="0"></div>
+            <div class="field"><label>Default Margin % (used for quick-suggest)</label><input type="number" id="set-margin" step="1" min="0"></div>
+          </div>
+          <div>
+            <div class="section-label" style="margin-top:0;">Filament Library</div>
+            <div class="filament-grid" id="filament-grid"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
 
   <div class="toast" id="toast"><span class="dot"></span><span id="toast-text">Saved</span></div>
 
@@ -776,16 +581,11 @@
       <div class="quote-top">
         <div style="display:flex; gap:12px; align-items:center;">
           <div class="quote-mark">R</div>
-          <div>
-            <h2>R PRINTS</h2>
-            <div style="font-family:var(--font-mono); font-size:11px; color:#666;">3D Printing Service — Quote</div>
-          </div>
+          <div><h2>R Prints</h2><div class="sub">3D Printing Service — Quote</div></div>
         </div>
         <div class="quote-meta" id="q-date"></div>
       </div>
-
-      <div style="font-family:var(--font-display); font-weight:600; font-size:16px; margin-bottom:14px;" id="q-name">Print Name</div>
-
+      <div class="quote-name" id="q-name">Print Name</div>
       <div class="quote-row"><span>Filament</span><span id="q-filament">—</span></div>
       <div class="quote-row"><span>Weight</span><span id="q-weight">—</span></div>
       <div class="quote-row"><span>Print Time</span><span id="q-time">—</span></div>
@@ -793,9 +593,7 @@
       <div class="quote-row"><span>Time Cost</span><span id="q-timecost">—</span></div>
       <div class="quote-row"><span>Base Fee + Extras</span><span id="q-baseextras">—</span></div>
       <div class="quote-row total"><span>Total</span><span id="q-total">£0.00</span></div>
-
       <p class="quote-foot">Quote valid for 14 days. Price includes materials, machine time and finishing. Custom modifications or rush turnaround may incur additional cost.</p>
-
       <div class="quote-actions">
         <button class="btn btn-ghost" id="btn-quote-close">Close</button>
         <button class="btn btn-primary" id="btn-quote-print">Print / Save PDF</button>
@@ -808,7 +606,6 @@
 (function(){
   "use strict";
 
-  /* ---------------- State ---------------- */
   const DEFAULT_FILAMENTS = [
     { name:"PLA",  price:18.00, density:1.24 },
     { name:"PETG", price:21.00, density:1.27 },
@@ -816,42 +613,36 @@
     { name:"TPU",  price:26.00, density:1.21 }
   ];
   const DEFAULT_SETTINGS = { hourRate:3.50, baseFee:2.00, margin:35 };
+  const TAG_COLORS = ["#A6E22E","#4FD1C5","#8B7CF6","#F472B6"];
 
-  function load(key, fallback){
-    try{
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    }catch(e){ return fallback; }
-  }
-  function save(key, value){
-    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
-  }
+  function load(key, fallback){ try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(e){ return fallback; } }
+  function save(key, value){ try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){} }
 
-  let settings   = load("rprints_settings", DEFAULT_SETTINGS);
-  let filaments  = load("rprints_filaments", DEFAULT_FILAMENTS);
-  let history    = load("rprints_history", []);
-  let stlResult  = null;
+  let settings  = load("rprints_settings", DEFAULT_SETTINGS);
+  let filaments = load("rprints_filaments", DEFAULT_FILAMENTS);
+  let history   = load("rprints_history", []);
+  let stlResult = null;
 
   const $  = (sel, ctx) => (ctx||document).querySelector(sel);
   const $$ = (sel, ctx) => Array.from((ctx||document).querySelectorAll(sel));
   const money = n => "£" + (isFinite(n) ? n : 0).toFixed(2);
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+  $("#header-date").textContent = new Date().toLocaleDateString("en-GB", {weekday:"short", day:"numeric", month:"short"});
 
   /* ---------------- Navigation ---------------- */
-  $$(".nav-item").forEach(item=>{
-    item.addEventListener("click", ()=> gotoPage(item.dataset.page));
-  });
+  $$(".rail-btn").forEach(item=> item.addEventListener("click", ()=> gotoPage(item.dataset.page)));
+  $("#btn-view-history").addEventListener("click", ()=> gotoPage("history"));
   function gotoPage(id){
-    $$(".nav-item").forEach(n=>n.classList.toggle("active", n.dataset.page===id));
+    $$(".rail-btn").forEach(n=>n.classList.toggle("active", n.dataset.page===id));
     $$(".page").forEach(p=>p.classList.toggle("active", p.id==="page-"+id));
   }
 
   /* ---------------- Toast ---------------- */
   let toastTimer;
   function toast(msg){
-    const t = $("#toast");
-    $("#toast-text").textContent = msg;
-    t.classList.add("show");
-    clearTimeout(toastTimer);
+    const t = $("#toast"); $("#toast-text").textContent = msg;
+    t.classList.add("show"); clearTimeout(toastTimer);
     toastTimer = setTimeout(()=>t.classList.remove("show"), 1800);
   }
 
@@ -861,178 +652,106 @@
     $("#in-filament").innerHTML = opts;
     $("#stl-filament").innerHTML = opts;
   }
-  function selectedFilament(sel){
-    const idx = parseInt(sel.value,10);
-    return filaments[idx] || filaments[0];
-  }
+  function selectedFilament(sel){ return filaments[parseInt(sel.value,10)] || filaments[0]; }
+  $("#in-filament").addEventListener("change", ()=>{ $("#in-price").value = selectedFilament($("#in-filament")).price; recalc(); });
 
-  $("#in-filament").addEventListener("change", ()=>{
-    const f = selectedFilament($("#in-filament"));
-    $("#in-price").value = f.price;
-    recalc();
-  });
-
-  /* ---------------- Calculator logic ---------------- */
-  const inName    = $("#in-name");
-  const inPrice   = $("#in-price");
-  const inWeight  = $("#in-weight");
-  const inExtras  = $("#in-extras");
-  const inHours   = $("#in-hours");
-  const inMinutes = $("#in-minutes");
-  const inSell    = $("#in-sell");
+  /* ---------------- Calculator ---------------- */
+  const inName=$("#in-name"), inPrice=$("#in-price"), inWeight=$("#in-weight"), inExtras=$("#in-extras"),
+        inHours=$("#in-hours"), inMinutes=$("#in-minutes"), inSell=$("#in-sell");
 
   function currentCalc(){
-    const price   = parseFloat(inPrice.value)   || 0;
-    const weight  = parseFloat(inWeight.value)  || 0;
-    const extras  = parseFloat(inExtras.value)  || 0;
-    const hours   = parseFloat(inHours.value)   || 0;
-    const minutes = parseFloat(inMinutes.value) || 0;
-    const sell    = parseFloat(inSell.value)    || 0;
-
-    const materialCost = (weight/1000) * price;
-    const timeCost = (hours + minutes/60) * settings.hourRate;
-    const baseFee = settings.baseFee;
-    const totalCost = materialCost + timeCost + baseFee + extras;
-    const profit = sell - totalCost;
-    const margin = sell > 0 ? (profit/sell)*100 : 0;
-
+    const price=parseFloat(inPrice.value)||0, weight=parseFloat(inWeight.value)||0, extras=parseFloat(inExtras.value)||0,
+          hours=parseFloat(inHours.value)||0, minutes=parseFloat(inMinutes.value)||0, sell=parseFloat(inSell.value)||0;
+    const materialCost=(weight/1000)*price, timeCost=(hours+minutes/60)*settings.hourRate, baseFee=settings.baseFee;
+    const totalCost=materialCost+timeCost+baseFee+extras, profit=sell-totalCost, margin=sell>0?(profit/sell)*100:0;
     return { materialCost, timeCost, baseFee, extras, totalCost, sell, profit, margin, weight, hours, minutes };
   }
 
   function recalc(){
     const c = currentCalc();
-    $("#c-material").textContent = money(c.materialCost);
-    $("#c-time").textContent = money(c.timeCost);
-    $("#c-base").textContent = money(c.baseFee);
-    $("#c-extras").textContent = money(c.extras);
-    $("#c-total").textContent = money(c.totalCost);
-    $("#c-profit").textContent = money(c.profit);
+    $("#c-material").textContent=money(c.materialCost);
+    $("#c-time").textContent=money(c.timeCost);
+    $("#c-base").textContent=money(c.baseFee);
+    $("#c-extras").textContent=money(c.extras);
+    $("#c-total").textContent=money(c.totalCost);
+    $("#c-profit").textContent=money(c.profit);
+    $("#c-profit").style.color = c.profit<0 ? "var(--coral)" : "var(--lime)";
 
-    const profitLine = $("#c-profit").closest(".cost-line");
-    profitLine.classList.toggle("neg", c.profit < 0);
-
-    // spool arcs, based on cost total (material / time / base+extras)
-    const t = c.materialCost + c.timeCost + c.baseFee + c.extras;
-    const spool = $("#spool");
-    if (t > 0){
-      spool.style.setProperty("--a1", (c.materialCost/t*100)+"%");
-      spool.style.setProperty("--a2", (c.timeCost/t*100)+"%");
-      spool.style.setProperty("--a3", ((c.baseFee+c.extras)/t*100)+"%");
-    } else {
-      spool.style.setProperty("--a1","0%");
-      spool.style.setProperty("--a2","0%");
-      spool.style.setProperty("--a3","0%");
-    }
-    $("#spool-total").textContent = money(c.totalCost);
-    $("#spool-margin").textContent = c.sell > 0 ? c.margin.toFixed(1)+"% margin" : "no sell price set";
-    $("#spool-margin").style.color = c.margin < 0 ? "var(--red)" : "var(--text-faint)";
+    $("#hero-total").textContent = money(c.sell>0?c.sell:c.totalCost);
+    $("#hero-margin").textContent = c.sell>0 ? `${c.margin.toFixed(1)}% margin · ${money(c.profit)} profit` : "no sell price set";
+    $("#hero-margin").style.color = c.sell>0 ? (c.margin<0?"var(--coral)":"var(--text-muted)") : "var(--text-muted)";
   }
-
-  [inName, inPrice, inWeight, inExtras, inHours, inMinutes, inSell].forEach(el=>{
-    el.addEventListener("input", recalc);
-  });
+  [inName,inPrice,inWeight,inExtras,inHours,inMinutes,inSell].forEach(el=> el.addEventListener("input", recalc));
 
   $$(".chip[data-margin]").forEach(chip=>{
     chip.addEventListener("click", ()=>{
-      const c = currentCalc();
-      const m = parseFloat(chip.dataset.margin);
-      const suggested = c.totalCost / (1 - m/100);
-      inSell.value = suggested.toFixed(2);
+      const c = currentCalc(), m = parseFloat(chip.dataset.margin);
+      inSell.value = (c.totalCost/(1-m/100)).toFixed(2);
       recalc();
     });
   });
 
   $("#btn-reset").addEventListener("click", ()=>{
-    inName.value=""; inWeight.value=0; inExtras.value=0;
-    inHours.value=0; inMinutes.value=0; inSell.value=0;
-    $("#in-filament").selectedIndex = 0;
-    inPrice.value = filaments[0].price;
-    recalc();
+    inName.value=""; inWeight.value=0; inExtras.value=0; inHours.value=0; inMinutes.value=0; inSell.value=0;
+    $("#in-filament").selectedIndex=0; inPrice.value=filaments[0].price; recalc();
   });
 
   $("#btn-save").addEventListener("click", ()=>{
-    const c = currentCalc();
-    const f = selectedFilament($("#in-filament"));
-    const entry = {
-      id: Date.now(),
-      name: inName.value.trim() || "Untitled Print",
-      date: new Date().toISOString().slice(0,10),
-      filament: f.name,
-      weight: c.weight,
-      hours: c.hours, minutes: c.minutes,
-      cost: c.totalCost, sell: c.sell, profit: c.profit, margin: c.margin
-    };
-    history.unshift(entry);
+    const c=currentCalc(), f=selectedFilament($("#in-filament"));
+    history.unshift({
+      id:Date.now(), name: inName.value.trim()||"Untitled Print", date:new Date().toISOString().slice(0,10),
+      filament:f.name, weight:c.weight, hours:c.hours, minutes:c.minutes,
+      cost:c.totalCost, sell:c.sell, profit:c.profit, margin:c.margin
+    });
     save("rprints_history", history);
-    renderHistory();
-    renderDashboard();
+    renderHistory(); renderDashboard();
     toast("Saved to history");
   });
 
   /* ---------------- Quote ---------------- */
   $("#btn-quote").addEventListener("click", ()=>{
-    const c = currentCalc();
-    const f = selectedFilament($("#in-filament"));
-    $("#q-date").textContent = new Date().toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"});
-    $("#q-name").textContent = inName.value.trim() || "Untitled Print";
-    $("#q-filament").textContent = f.name;
-    $("#q-weight").textContent = c.weight.toFixed(1) + " g";
-    $("#q-time").textContent = c.hours + "h " + c.minutes + "m";
-    $("#q-material").textContent = money(c.materialCost);
-    $("#q-timecost").textContent = money(c.timeCost);
-    $("#q-baseextras").textContent = money(c.baseFee + c.extras);
-    $("#q-total").textContent = money(c.sell > 0 ? c.sell : c.totalCost);
+    const c=currentCalc(), f=selectedFilament($("#in-filament"));
+    $("#q-date").textContent=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+    $("#q-name").textContent=inName.value.trim()||"Untitled Print";
+    $("#q-filament").textContent=f.name;
+    $("#q-weight").textContent=c.weight.toFixed(1)+" g";
+    $("#q-time").textContent=c.hours+"h "+c.minutes+"m";
+    $("#q-material").textContent=money(c.materialCost);
+    $("#q-timecost").textContent=money(c.timeCost);
+    $("#q-baseextras").textContent=money(c.baseFee+c.extras);
+    $("#q-total").textContent=money(c.sell>0?c.sell:c.totalCost);
     $("#quote-overlay").classList.add("show");
   });
-  $("#btn-quote-close").addEventListener("click", ()=> $("#quote-overlay").classList.remove("show"));
-  $("#quote-overlay").addEventListener("click", (e)=>{ if(e.target.id==="quote-overlay") $("#quote-overlay").classList.remove("show"); });
-  $("#btn-quote-print").addEventListener("click", ()=> window.print());
+  $("#btn-quote-close").addEventListener("click", ()=>$("#quote-overlay").classList.remove("show"));
+  $("#quote-overlay").addEventListener("click", e=>{ if(e.target.id==="quote-overlay") $("#quote-overlay").classList.remove("show"); });
+  $("#btn-quote-print").addEventListener("click", ()=>window.print());
 
   /* ---------------- History ---------------- */
   function renderHistory(){
-    const body = $("#history-body");
-    $("#hist-count").textContent = history.length;
-    if (history.length === 0){
-      body.innerHTML = `<tr class="empty-row"><td colspan="9">No prints yet. Use the calculator to add one.</td></tr>`;
-      return;
-    }
+    const body=$("#history-body");
+    $("#hist-count").textContent=history.length;
+    if(history.length===0){ body.innerHTML=`<tr class="empty-row"><td colspan="9">No prints yet. Use the calculator to add one.</td></tr>`; return; }
     body.innerHTML = history.map(h=>`
       <tr>
-        <td>${escapeHtml(h.name)}</td>
-        <td class="mono">${h.date}</td>
-        <td class="mono">${h.weight.toFixed(1)}g</td>
-        <td class="mono">${h.hours}h ${h.minutes}m</td>
-        <td class="mono">${money(h.cost)}</td>
-        <td class="mono">${money(h.sell)}</td>
-        <td class="mono" style="color:${h.profit<0?'var(--red)':'var(--green)'}">${money(h.profit)}</td>
-        <td class="mono">${h.margin.toFixed(1)}%</td>
-        <td><button class="row-del" data-id="${h.id}" title="Delete">✕</button></td>
-      </tr>
-    `).join("");
+        <td>${escapeHtml(h.name)}</td><td>${h.date}</td><td>${h.weight.toFixed(1)}g</td><td>${h.hours}h ${h.minutes}m</td>
+        <td>${money(h.cost)}</td><td>${money(h.sell)}</td>
+        <td class="${h.profit<0?'neg':'pos'}">${money(h.profit)}</td><td>${h.margin.toFixed(1)}%</td>
+        <td><button class="row-del" data-id="${h.id}">✕</button></td>
+      </tr>`).join("");
     $$(".row-del", body).forEach(btn=>{
       btn.addEventListener("click", ()=>{
-        history = history.filter(h=>h.id !== parseInt(btn.dataset.id,10));
-        save("rprints_history", history);
-        renderHistory();
-        renderDashboard();
+        history = history.filter(h=>h.id!==parseInt(btn.dataset.id,10));
+        save("rprints_history", history); renderHistory(); renderDashboard();
       });
     });
   }
-
   $("#btn-clear-history").addEventListener("click", ()=>{
-    if (history.length===0) return;
-    if (confirm("Clear all print history? This can't be undone.")){
-      history = [];
-      save("rprints_history", history);
-      renderHistory();
-      renderDashboard();
-      toast("History cleared");
+    if(history.length===0) return;
+    if(confirm("Clear all print history? This can't be undone.")){
+      history=[]; save("rprints_history",history); renderHistory(); renderDashboard(); toast("History cleared");
     }
   });
-
-  function escapeHtml(s){
-    return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  }
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
   /* ---------------- Dashboard ---------------- */
   function renderDashboard(){
@@ -1044,204 +763,208 @@
     $("#stat-profit").textContent = money(profit);
     $("#stat-margin").textContent = avgMargin.toFixed(1)+"%";
 
+    $("#bar-count").style.width = clamp((history.length/30)*100,4,100)+"%";
+    $("#bar-revenue").style.width = clamp((revenue/500)*100,4,100)+"%";
+    $("#bar-profit").style.width = clamp((profit/300)*100,4,100)+"%";
+    $("#bar-margin").style.width = clamp(avgMargin,4,100)+"%";
+
     const recent = history.slice(0,5);
     const body = $("#recent-body");
-    if (recent.length===0){
-      body.innerHTML = `<tr class="empty-row"><td colspan="6">No prints yet. Head to the Calculator to price your first job.</td></tr>`;
-    } else {
-      body.innerHTML = recent.map(h=>`
+    body.innerHTML = recent.length===0
+      ? `<tr class="empty-row"><td colspan="6">No prints yet. Head to the Calculator to price your first job.</td></tr>`
+      : recent.map(h=>`
         <tr>
-          <td>${escapeHtml(h.name)}</td>
-          <td class="mono">${h.date}</td>
-          <td class="mono">${h.weight.toFixed(1)}g</td>
-          <td class="mono">${money(h.cost)}</td>
-          <td class="mono">${money(h.sell)}</td>
-          <td class="mono" style="color:${h.profit<0?'var(--red)':'var(--green)'}">${money(h.profit)}</td>
-        </tr>
-      `).join("");
+          <td>${escapeHtml(h.name)}</td><td>${h.date}</td><td>${h.weight.toFixed(1)}g</td>
+          <td>${money(h.cost)}</td><td>${money(h.sell)}</td>
+          <td class="${h.profit<0?'neg':'pos'}">${money(h.profit)}</td>
+        </tr>`).join("");
+
+    renderActivityGrid();
+    renderChart();
+  }
+
+  function renderActivityGrid(){
+    const days = 70;
+    const counts = {};
+    history.forEach(h=>{ counts[h.date] = (counts[h.date]||0)+1; });
+    const today = new Date();
+    let html = "";
+    for (let i=days-1; i>=0; i--){
+      const d = new Date(today); d.setDate(d.getDate()-i);
+      const key = d.toISOString().slice(0,10);
+      const n = counts[key]||0;
+      let cls = "";
+      if (n>=3) cls="l3"; else if (n===2) cls="l2"; else if (n===1) cls="l1";
+      html += `<div class="activity-dot ${cls}" title="${key}: ${n} print${n===1?'':'s'}"></div>`;
     }
+    $("#activity-grid").innerHTML = html;
+  }
+
+  function renderChart(){
+    const wrap = $("#chart-wrap");
+    if (history.length < 2){
+      wrap.innerHTML = `<div class="chart-empty">Log a couple more prints to see the trend line.</div>`;
+      return;
+    }
+    const chrono = history.slice().sort((a,b)=> a.id-b.id).slice(-14);
+    let cumRev=0, cumProfit=0;
+    const revPts=[], profitPts=[];
+    chrono.forEach(h=>{ cumRev+=h.sell; cumProfit+=h.profit; revPts.push(cumRev); profitPts.push(cumProfit); });
+
+    const w=600, h=140, pad=8;
+    const maxV = Math.max(...revPts, ...profitPts, 1);
+    const minV = Math.min(0, ...profitPts);
+    const range = (maxV-minV) || 1;
+    const stepX = (w-pad*2) / (chrono.length-1);
+    const toY = v => h-pad - ((v-minV)/range)*(h-pad*2);
+
+    const revPath = revPts.map((v,i)=> `${i===0?'M':'L'} ${pad+i*stepX} ${toY(v)}`).join(" ");
+    const profitPath = profitPts.map((v,i)=> `${i===0?'M':'L'} ${pad+i*stepX} ${toY(v)}`).join(" ");
+
+    wrap.innerHTML = `
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <line x1="0" y1="${toY(0)}" x2="${w}" y2="${toY(0)}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+        <path d="${profitPath}" fill="none" stroke="#8B7CF6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${revPath}" fill="none" stroke="#A6E22E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
   }
 
   /* ---------------- Settings ---------------- */
   function renderSettings(){
-    $("#set-hourrate").value = settings.hourRate;
-    $("#set-basefee").value = settings.baseFee;
-    $("#set-margin").value = settings.margin;
-    renderFilamentTable();
+    $("#set-hourrate").value=settings.hourRate;
+    $("#set-basefee").value=settings.baseFee;
+    $("#set-margin").value=settings.margin;
+    renderFilamentGrid();
   }
-
   ["set-hourrate","set-basefee","set-margin"].forEach(id=>{
     $("#"+id).addEventListener("input", ()=>{
-      settings.hourRate = parseFloat($("#set-hourrate").value) || 0;
-      settings.baseFee  = parseFloat($("#set-basefee").value) || 0;
-      settings.margin   = parseFloat($("#set-margin").value) || 0;
-      save("rprints_settings", settings);
-      recalc();
+      settings.hourRate=parseFloat($("#set-hourrate").value)||0;
+      settings.baseFee=parseFloat($("#set-basefee").value)||0;
+      settings.margin=parseFloat($("#set-margin").value)||0;
+      save("rprints_settings", settings); recalc();
     });
   });
 
-  function renderFilamentTable(){
-    const body = $("#filament-body");
-    body.innerHTML = filaments.map((f,i)=>`
-      <tr class="fil-row" data-i="${i}">
-        <td><input type="text" class="f-name" value="${escapeHtml(f.name)}"></td>
-        <td><input type="number" class="f-price" step="0.01" min="0" value="${f.price}"></td>
-        <td><input type="number" class="f-density" step="0.01" min="0" value="${f.density}"></td>
-        <td><button class="row-del" title="Delete">✕</button></td>
-      </tr>
-    `).join("");
+  function renderFilamentGrid(){
+    const grid = $("#filament-grid");
+    grid.innerHTML = filaments.map((f,i)=>`
+      <div class="filament-card" data-i="${i}" style="--barcolor:${TAG_COLORS[i%4]}">
+        <button class="fc-del">✕</button>
+        <div class="fc-name"><input type="text" class="f-name" value="${escapeHtml(f.name)}"></div>
+        <label>£ / kg</label><input type="number" class="f-price" step="0.01" min="0" value="${f.price}">
+        <label style="margin-top:8px;">g / cm³</label><input type="number" class="f-density" step="0.01" min="0" value="${f.density}">
+      </div>`).join("") + `<div class="add-filament-card" id="btn-add-filament">+ New Filament</div>`;
 
-    $$(".fil-row", body).forEach(row=>{
-      const i = parseInt(row.dataset.i,10);
-      row.querySelector(".f-name").addEventListener("input", e=>{ filaments[i].name = e.target.value; persistFilaments(); });
-      row.querySelector(".f-price").addEventListener("input", e=>{ filaments[i].price = parseFloat(e.target.value)||0; persistFilaments(); });
-      row.querySelector(".f-density").addEventListener("input", e=>{ filaments[i].density = parseFloat(e.target.value)||0; persistFilaments(); });
-      row.querySelector(".row-del").addEventListener("click", ()=>{
-        if (filaments.length <= 1){ toast("Keep at least one filament"); return; }
-        filaments.splice(i,1);
-        persistFilaments();
-        renderFilamentTable();
-        renderFilamentSelects();
+    if(!document.getElementById("filament-tag-style")){
+      const s = document.createElement("style");
+      s.id = "filament-tag-style";
+      s.textContent = ".filament-card::before{background:var(--barcolor);}";
+      document.head.appendChild(s);
+    }
+
+    $$(".filament-card", grid).forEach(card=>{
+      const i = parseInt(card.dataset.i,10);
+      card.querySelector(".f-name").addEventListener("input", e=>{ filaments[i].name=e.target.value; persistFilaments(); });
+      card.querySelector(".f-price").addEventListener("input", e=>{ filaments[i].price=parseFloat(e.target.value)||0; persistFilaments(); });
+      card.querySelector(".f-density").addEventListener("input", e=>{ filaments[i].density=parseFloat(e.target.value)||0; persistFilaments(); });
+      card.querySelector(".fc-del").addEventListener("click", ()=>{
+        if(filaments.length<=1){ toast("Keep at least one filament"); return; }
+        filaments.splice(i,1); persistFilaments(); renderFilamentGrid(); renderFilamentSelects();
       });
     });
-  }
 
-  function persistFilaments(){
-    save("rprints_filaments", filaments);
-    renderFilamentSelects();
+    $("#btn-add-filament").addEventListener("click", ()=>{
+      filaments.push({ name:"New Filament", price:20.00, density:1.24 });
+      persistFilaments(); renderFilamentGrid(); renderFilamentSelects(); toast("Filament added");
+    });
   }
-
-  $("#btn-add-filament").addEventListener("click", ()=>{
-    filaments.push({ name:"New Filament", price:20.00, density:1.24 });
-    persistFilaments();
-    renderFilamentTable();
-    toast("Filament added");
-  });
+  function persistFilaments(){ save("rprints_filaments", filaments); renderFilamentSelects(); }
 
   /* ---------------- STL Parsing ---------------- */
-  const dropzone = $("#dropzone");
-  const fileInput = $("#file-input");
-
-  dropzone.addEventListener("click", ()=> fileInput.click());
+  const dropzone=$("#dropzone"), fileInput=$("#file-input");
+  dropzone.addEventListener("click", ()=>fileInput.click());
   dropzone.addEventListener("dragover", e=>{ e.preventDefault(); dropzone.classList.add("drag"); });
-  dropzone.addEventListener("dragleave", ()=> dropzone.classList.remove("drag"));
-  dropzone.addEventListener("drop", e=>{
-    e.preventDefault();
-    dropzone.classList.remove("drag");
-    if (e.dataTransfer.files.length) handleSTL(e.dataTransfer.files[0]);
-  });
-  fileInput.addEventListener("change", e=>{
-    if (e.target.files.length) handleSTL(e.target.files[0]);
-  });
-
-  $("#infill").addEventListener("input", ()=>{
-    $("#infill-val").textContent = $("#infill").value + "%";
-    updateWeightEstimate();
-  });
+  dropzone.addEventListener("dragleave", ()=>dropzone.classList.remove("drag"));
+  dropzone.addEventListener("drop", e=>{ e.preventDefault(); dropzone.classList.remove("drag"); if(e.dataTransfer.files.length) handleSTL(e.dataTransfer.files[0]); });
+  fileInput.addEventListener("change", e=>{ if(e.target.files.length) handleSTL(e.target.files[0]); });
+  $("#infill").addEventListener("input", ()=>{ $("#infill-val").textContent=$("#infill").value+"%"; updateWeightEstimate(); });
   $("#stl-filament").addEventListener("change", updateWeightEstimate);
 
   function handleSTL(file){
-    $("#loaded-file").textContent = file.name + "  (" + (file.size/1024).toFixed(1) + " KB)";
+    $("#loaded-file").textContent = file.name+"  ("+(file.size/1024).toFixed(1)+" KB)";
     const reader = new FileReader();
-    reader.onload = function(e){
+    reader.onload = e=>{
       try{
-        const buf = e.target.result;
-        const result = parseSTL(buf);
+        const result = parseSTL(e.target.result);
         stlResult = result;
         $("#m-tris").textContent = result.triCount.toLocaleString();
         $("#m-bbox").textContent = `${result.bbox.x.toFixed(1)} × ${result.bbox.y.toFixed(1)} × ${result.bbox.z.toFixed(1)}`;
-        $("#m-vol").textContent = result.volumeCm3.toFixed(2) + " cm³";
+        $("#m-vol").textContent = result.volumeCm3.toFixed(2)+" cm³";
         updateWeightEstimate();
         $("#btn-send-calc").disabled = false;
         loadMeshIntoViewer(result);
-      }catch(err){
-        toast("Couldn't parse this STL");
-        console.error(err);
-      }
+      }catch(err){ toast("Couldn't parse this STL"); console.error(err); }
     };
     reader.readAsArrayBuffer(file);
   }
-
   function updateWeightEstimate(){
-    if (!stlResult) return;
-    const factor = (parseFloat($("#infill").value)||30)/100;
-    const f = selectedFilament($("#stl-filament"));
-    const weight = stlResult.volumeCm3 * f.density * factor;
-    $("#m-weight").textContent = weight.toFixed(1) + " g";
+    if(!stlResult) return;
+    const factor=(parseFloat($("#infill").value)||30)/100, f=selectedFilament($("#stl-filament"));
+    const weight = stlResult.volumeCm3*f.density*factor;
+    $("#m-weight").textContent = weight.toFixed(1)+" g";
     stlResult.estWeight = weight;
   }
-
   $("#btn-send-calc").addEventListener("click", ()=>{
-    if (!stlResult) return;
+    if(!stlResult) return;
     gotoPage("calculator");
     inWeight.value = stlResult.estWeight.toFixed(1);
-    const idx = $("#stl-filament").value;
-    $("#in-filament").value = idx;
+    $("#in-filament").value = $("#stl-filament").value;
     inPrice.value = selectedFilament($("#in-filament")).price;
-    recalc();
-    toast("Sent to calculator");
+    recalc(); toast("Sent to calculator");
   });
 
-  // STL parser: supports binary and ASCII, computes signed volume + bbox + tri count
   function parseSTL(buffer){
     const dv = new DataView(buffer);
-    const isAsciiHeader = readAsAscii(buffer, 0, 5) === "solid";
-    // Binary STL check: header(80) + count(4) + count*50 bytes should equal file length
-    let binaryTriCount = -1;
-    if (buffer.byteLength >= 84){
-      binaryTriCount = dv.getUint32(80, true);
-    }
+    const isAsciiHeader = readAsAscii(buffer,0,5)==="solid";
+    let binaryTriCount=-1;
+    if(buffer.byteLength>=84) binaryTriCount = dv.getUint32(80,true);
     const expectedBinarySize = 84 + binaryTriCount*50;
-
-    if (!isAsciiHeader || expectedBinarySize === buffer.byteLength){
-      return parseBinarySTL(dv, binaryTriCount);
-    } else {
-      return parseAsciiSTL(buffer);
-    }
+    return (!isAsciiHeader || expectedBinarySize===buffer.byteLength) ? parseBinarySTL(dv,binaryTriCount) : parseAsciiSTL(buffer);
   }
-
-  function readAsAscii(buffer, start, len){
-    const bytes = new Uint8Array(buffer, start, Math.min(len, buffer.byteLength-start));
+  function readAsAscii(buffer,start,len){
+    const bytes = new Uint8Array(buffer,start,Math.min(len,buffer.byteLength-start));
     return Array.from(bytes).map(b=>String.fromCharCode(b)).join("");
   }
-
-  function parseBinarySTL(dv, triCount){
-    let offset = 84;
-    let volume = 0;
-    let min = [Infinity,Infinity,Infinity], max = [-Infinity,-Infinity,-Infinity];
-    const positions = new Float32Array(triCount*9);
-    let p = 0;
-    for (let i=0; i<triCount; i++){
-      offset += 12; // skip normal
-      const v = [];
-      for (let k=0;k<3;k++){
-        const x = dv.getFloat32(offset, true); offset+=4;
-        const y = dv.getFloat32(offset, true); offset+=4;
-        const z = dv.getFloat32(offset, true); offset+=4;
+  function parseBinarySTL(dv,triCount){
+    let offset=84, volume=0;
+    let min=[Infinity,Infinity,Infinity], max=[-Infinity,-Infinity,-Infinity];
+    const positions = new Float32Array(triCount*9); let p=0;
+    for(let i=0;i<triCount;i++){
+      offset+=12;
+      const v=[];
+      for(let k=0;k<3;k++){
+        const x=dv.getFloat32(offset,true); offset+=4;
+        const y=dv.getFloat32(offset,true); offset+=4;
+        const z=dv.getFloat32(offset,true); offset+=4;
         v.push([x,y,z]);
         positions[p++]=x; positions[p++]=y; positions[p++]=z;
         min[0]=Math.min(min[0],x); min[1]=Math.min(min[1],y); min[2]=Math.min(min[2],z);
         max[0]=Math.max(max[0],x); max[1]=Math.max(max[1],y); max[2]=Math.max(max[2],z);
       }
-      volume += signedTetraVolume(v[0], v[1], v[2]);
-      offset += 2; // attribute byte count
+      volume += signedTetraVolume(v[0],v[1],v[2]);
+      offset+=2;
     }
-    return finalizeMesh(volume, triCount, min, max, positions);
+    return finalizeMesh(volume,triCount,min,max,positions);
   }
-
   function parseAsciiSTL(buffer){
     const text = new TextDecoder().decode(buffer);
     const vertexRe = /vertex\s+([-\d.eE+]+)\s+([-\d.eE+]+)\s+([-\d.eE+]+)/g;
-    let m; const verts = [];
-    while ((m = vertexRe.exec(text)) !== null){
-      verts.push([parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3])]);
-    }
-    let volume = 0;
-    let min = [Infinity,Infinity,Infinity], max = [-Infinity,-Infinity,-Infinity];
-    let triCount = Math.floor(verts.length/3);
-    const positions = new Float32Array(triCount*9);
-    let p = 0;
-    for (let i=0; i<triCount; i++){
+    let m; const verts=[];
+    while((m=vertexRe.exec(text))!==null) verts.push([parseFloat(m[1]),parseFloat(m[2]),parseFloat(m[3])]);
+    let volume=0, min=[Infinity,Infinity,Infinity], max=[-Infinity,-Infinity,-Infinity];
+    const triCount = Math.floor(verts.length/3);
+    const positions = new Float32Array(triCount*9); let p=0;
+    for(let i=0;i<triCount;i++){
       const v0=verts[i*3], v1=verts[i*3+1], v2=verts[i*3+2];
       volume += signedTetraVolume(v0,v1,v2);
       [v0,v1,v2].forEach(v=>{
@@ -1250,191 +973,121 @@
         max[0]=Math.max(max[0],v[0]); max[1]=Math.max(max[1],v[1]); max[2]=Math.max(max[2],v[2]);
       });
     }
-    return finalizeMesh(volume, triCount, min, max, positions);
+    return finalizeMesh(volume,triCount,min,max,positions);
   }
-
   function signedTetraVolume(a,b,c){
-    return (
-      a[0]*(b[1]*c[2]-b[2]*c[1]) -
-      a[1]*(b[0]*c[2]-b[2]*c[0]) +
-      a[2]*(b[0]*c[1]-b[1]*c[0])
-    ) / 6.0;
+    return (a[0]*(b[1]*c[2]-b[2]*c[1]) - a[1]*(b[0]*c[2]-b[2]*c[0]) + a[2]*(b[0]*c[1]-b[1]*c[0]))/6.0;
   }
-
-  function finalizeMesh(volume, triCount, min, max, positions){
+  function finalizeMesh(volume,triCount,min,max,positions){
     const volumeMm3 = Math.abs(volume);
-    const volumeCm3 = volumeMm3 / 1000;
-    const bbox = {
-      x: isFinite(max[0]-min[0]) ? max[0]-min[0] : 0,
-      y: isFinite(max[1]-min[1]) ? max[1]-min[1] : 0,
-      z: isFinite(max[2]-min[2]) ? max[2]-min[2] : 0
-    };
-    return { volumeCm3, triCount, bbox, positions, min, max };
+    const bbox = { x:isFinite(max[0]-min[0])?max[0]-min[0]:0, y:isFinite(max[1]-min[1])?max[1]-min[1]:0, z:isFinite(max[2]-min[2])?max[2]-min[2]:0 };
+    return { volumeCm3:volumeMm3/1000, triCount, bbox, positions, min, max };
   }
 
   /* ---------------- 3D Viewer ---------------- */
-  const VIEWER_TRI_LIMIT = 600000; // skip live render above this for performance; stats still computed
-
-  let viewer = null; // lazily created
+  const VIEWER_TRI_LIMIT = 600000;
+  let viewer=null, wireframeOn=false;
 
   function ensureViewer(){
-    if (viewer || typeof THREE === "undefined") return viewer;
-    const wrap = $("#viewer-wrap");
-    const canvas = $("#viewer-canvas");
-    const w = wrap.clientWidth, h = wrap.clientHeight;
-
+    if(viewer || typeof THREE==="undefined") return viewer;
+    const wrap=$("#viewer-wrap"), canvas=$("#viewer-canvas");
+    const w=wrap.clientWidth, h=wrap.clientHeight;
     const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(w, h, false);
-
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+    renderer.setSize(w,h,false);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 100000);
+    scene.add(new THREE.AmbientLight(0xdadade, 0.75));
+    const key = new THREE.DirectionalLight(0xffffff, 0.85); key.position.set(1,1.4,1); scene.add(key);
+    const fill = new THREE.DirectionalLight(0xa6e22e, 0.25); fill.position.set(-1,-0.3,-0.7); scene.add(fill);
+    const grid = new THREE.GridHelper(100, 10, 0xa6e22e, 0x2a2a2d); grid.material.opacity=0.28; grid.material.transparent=true; scene.add(grid);
 
-    scene.add(new THREE.AmbientLight(0x8899aa, 0.7));
-    const key = new THREE.DirectionalLight(0xfff2d9, 0.9);
-    key.position.set(1, 1.4, 1);
-    scene.add(key);
-    const fill = new THREE.DirectionalLight(0x38c7c2, 0.35);
-    fill.position.set(-1, -0.4, -0.8);
-    scene.add(fill);
-
-    const grid = new THREE.GridHelper(100, 10, 0x38c7c2, 0x26384f);
-    grid.material.opacity = 0.35;
-    grid.material.transparent = true;
-    scene.add(grid);
-
-    viewer = {
-      renderer, scene, camera, grid, mesh:null,
-      rotX:0.45, rotY:0.7, dist:100, targetDim:60,
-      dragging:false, lastX:0, lastY:0
-    };
-
+    viewer = { renderer, scene, camera, grid, mesh:null, rotX:0.45, rotY:0.7, dist:100, targetDim:60, dragging:false, lastX:0, lastY:0 };
     function place(){
-      const r = viewer.dist;
-      camera.position.set(
-        r*Math.sin(viewer.rotY)*Math.cos(viewer.rotX),
-        r*Math.sin(viewer.rotX),
-        r*Math.cos(viewer.rotY)*Math.cos(viewer.rotX)
-      );
+      const r=viewer.dist;
+      camera.position.set(r*Math.sin(viewer.rotY)*Math.cos(viewer.rotX), r*Math.sin(viewer.rotX), r*Math.cos(viewer.rotY)*Math.cos(viewer.rotX));
       camera.lookAt(0,0,0);
     }
-    viewer.place = place;
-    place();
+    viewer.place = place; place();
 
-    wrap.addEventListener("pointerdown", e=>{
-      viewer.dragging = true; viewer.lastX = e.clientX; viewer.lastY = e.clientY;
-      wrap.setPointerCapture(e.pointerId);
-    });
+    let idleSpin = true;
+    wrap.addEventListener("pointerdown", e=>{ viewer.dragging=true; viewer.lastX=e.clientX; viewer.lastY=e.clientY; wrap.setPointerCapture(e.pointerId); idleSpin=false; });
     wrap.addEventListener("pointermove", e=>{
-      if (!viewer.dragging) return;
-      const dx = e.clientX - viewer.lastX, dy = e.clientY - viewer.lastY;
-      viewer.lastX = e.clientX; viewer.lastY = e.clientY;
-      viewer.rotY += dx * 0.008;
-      viewer.rotX = Math.max(-1.35, Math.min(1.35, viewer.rotX + dy * 0.008));
+      if(!viewer.dragging) return;
+      const dx=e.clientX-viewer.lastX, dy=e.clientY-viewer.lastY;
+      viewer.lastX=e.clientX; viewer.lastY=e.clientY;
+      viewer.rotY += dx*0.008; viewer.rotX = clamp(viewer.rotX+dy*0.008,-1.35,1.35);
       place();
     });
-    ["pointerup","pointerleave","pointercancel"].forEach(evt=>{
-      wrap.addEventListener(evt, ()=>{ viewer.dragging = false; });
-    });
+    ["pointerup","pointerleave","pointercancel"].forEach(evt=> wrap.addEventListener(evt, ()=>{ viewer.dragging=false; }));
     wrap.addEventListener("wheel", e=>{
       e.preventDefault();
-      viewer.dist = Math.max(viewer.targetDim*0.4, Math.min(viewer.targetDim*6, viewer.dist * (1 + e.deltaY*0.001)));
+      viewer.dist = clamp(viewer.dist*(1+e.deltaY*0.001), viewer.targetDim*0.4, viewer.targetDim*6);
       place();
     }, { passive:false });
 
-    let idleSpin = true;
-    wrap.addEventListener("pointerdown", ()=> idleSpin = false);
-
     function animate(){
       requestAnimationFrame(animate);
-      if (idleSpin && !viewer.dragging){
-        viewer.rotY += 0.0018;
-        place();
-      }
+      if(idleSpin && !viewer.dragging){ viewer.rotY+=0.0018; place(); }
       renderer.render(scene, camera);
     }
     animate();
 
     const ro = new ResizeObserver(()=>{
-      const nw = wrap.clientWidth, nh = wrap.clientHeight;
-      if (nw===0||nh===0) return;
-      renderer.setSize(nw, nh, false);
-      camera.aspect = nw/nh;
-      camera.updateProjectionMatrix();
+      const nw=wrap.clientWidth, nh=wrap.clientHeight;
+      if(nw===0||nh===0) return;
+      renderer.setSize(nw,nh,false); camera.aspect=nw/nh; camera.updateProjectionMatrix();
     });
     ro.observe(wrap);
-
     return viewer;
   }
 
   function loadMeshIntoViewer(result){
-    if (typeof THREE === "undefined") return;
-    if (result.triCount > VIEWER_TRI_LIMIT){
-      $("#viewer-empty").style.display = "flex";
-      $("#viewer-empty").querySelector("span").textContent = "Mesh too large to preview live — stats above are still accurate";
-      $("#viewer-hint").style.display = "none";
+    if(typeof THREE==="undefined") return;
+    if(result.triCount > VIEWER_TRI_LIMIT){
+      $("#viewer-empty").style.display="flex";
+      $("#viewer-empty").querySelector("span").textContent="Mesh too large to preview live — stats above are still accurate";
+      $("#viewer-hint").style.display="none";
       return;
     }
-    const v = ensureViewer();
-    if (!v) return;
-
-    if (v.mesh){
-      v.scene.remove(v.mesh);
-      v.mesh.geometry.dispose();
-      v.mesh.material.dispose();
-      v.mesh = null;
-    }
+    const v = ensureViewer(); if(!v) return;
+    if(v.mesh){ v.scene.remove(v.mesh); v.mesh.geometry.dispose(); v.mesh.material.dispose(); v.mesh=null; }
 
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(result.positions, 3));
+    geometry.setAttribute("position", new THREE.BufferAttribute(result.positions,3));
     geometry.computeVertexNormals();
+    const cx=(result.min[0]+result.max[0])/2, cy=(result.min[1]+result.max[1])/2, cz=(result.min[2]+result.max[2])/2;
+    geometry.translate(-cx,-cy,-cz);
 
-    const cx = (result.min[0]+result.max[0])/2;
-    const cy = (result.min[1]+result.max[1])/2;
-    const cz = (result.min[2]+result.max[2])/2;
-    geometry.translate(-cx, -cy, -cz);
-
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xF5A623, metalness:0.12, roughness:0.55,
-      wireframe: wireframeOn
-    });
+    const material = new THREE.MeshStandardMaterial({ color:0xA6E22E, metalness:0.1, roughness:0.5, wireframe:wireframeOn });
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.rotation.x = -Math.PI/2; // STL is typically Z-up; three.js is Y-up
-    v.scene.add(mesh);
-    v.mesh = mesh;
+    mesh.rotation.x = -Math.PI/2;
+    v.scene.add(mesh); v.mesh = mesh;
 
     const maxDim = Math.max(result.bbox.x, result.bbox.y, result.bbox.z, 1);
-    v.targetDim = maxDim;
-    v.dist = maxDim * 1.9;
-    v.rotX = 0.45; v.rotY = 0.7;
-    v.place();
+    v.targetDim=maxDim; v.dist=maxDim*1.9; v.rotX=0.45; v.rotY=0.7; v.place();
 
-    const gridSize = maxDim * 2.4;
     v.scene.remove(v.grid);
-    v.grid = new THREE.GridHelper(gridSize, 10, 0x38c7c2, 0x26384f);
-    v.grid.material.opacity = 0.35;
-    v.grid.material.transparent = true;
-    v.grid.position.y = -maxDim*0.001; // sit just under the model
+    v.grid = new THREE.GridHelper(maxDim*2.4, 10, 0xa6e22e, 0x2a2a2d);
+    v.grid.material.opacity=0.28; v.grid.material.transparent=true;
+    v.grid.position.y = -maxDim*0.001;
     v.scene.add(v.grid);
 
-    $("#viewer-empty").style.display = "none";
-    $("#viewer-hint").style.display = "block";
+    $("#viewer-empty").style.display="none";
+    $("#viewer-hint").style.display="block";
   }
 
-  let wireframeOn = false;
   $("#vt-wireframe").addEventListener("click", ()=>{
-    wireframeOn = !wireframeOn;
+    wireframeOn=!wireframeOn;
     $("#vt-wireframe").classList.toggle("on", wireframeOn);
-    if (viewer && viewer.mesh){
-      viewer.mesh.material.wireframe = wireframeOn;
-      viewer.mesh.material.color.set(wireframeOn ? 0x38c7c2 : 0xF5A623);
+    if(viewer && viewer.mesh){
+      viewer.mesh.material.wireframe=wireframeOn;
+      viewer.mesh.material.color.set(wireframeOn?0x8B7CF6:0xA6E22E);
     }
   });
   $("#vt-reset").addEventListener("click", ()=>{
-    if (!viewer) return;
-    viewer.rotX = 0.45; viewer.rotY = 0.7;
-    viewer.dist = viewer.targetDim * 1.9;
-    viewer.place();
+    if(!viewer) return;
+    viewer.rotX=0.45; viewer.rotY=0.7; viewer.dist=viewer.targetDim*1.9; viewer.place();
   });
 
   /* ---------------- Init ---------------- */
