@@ -422,6 +422,12 @@
     .quote-sheet{position:absolute; top:0; left:0; box-shadow:none; width:100%; max-width:none; border-radius:0;}
     .quote-actions{display:none;}
   }
+
+  .mode-pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(77,124,255,.14);color:var(--accent);margin-left:8px;vertical-align:middle}
+  .spec-table .cost-row span:last-child{text-align:right}
+  #colour-box{display:none;border:1px solid var(--line, #262C36);border-radius:10px;padding:10px 12px 2px;margin-bottom:14px}
+  .import-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .import-row .hint{margin:0;flex:1 1 220px}
 </style>
 </head>
 <body>
@@ -480,7 +486,7 @@
         <div class="page-head">
           <div>
             <div class="page-title">Dashboard</div>
-            <div class="page-desc">What the printer's doing right now, and everything priced and logged.</div>
+            <div class="page-desc" id="dash-desc">What the printer's doing right now, and everything priced and logged.</div>
           </div>
         </div>
 
@@ -555,11 +561,41 @@
       <section class="page" id="page-printer">
         <div class="page-head">
           <div>
-            <div class="page-title">Printer</div>
+            <div class="page-title">Printer<span class="mode-pill" id="printer-mode" style="display:none">Manual</span></div>
             <div class="page-desc" id="printer-desc">Live status from your Neptune 4.</div>
           </div>
-          <div class="btn-row" style="margin:0;">
+          <div class="btn-row moon-only" style="margin:0;">
             <button class="btn btn-sm" id="btn-printer-refresh">Refresh</button>
+          </div>
+        </div>
+
+        <div id="printer-centauri" style="display:none;">
+          <div class="grid grid-cols-2">
+            <div class="card">
+              <div class="section-label" style="margin-bottom:12px;">Elegoo Centauri 2 Combo</div>
+              <div class="spec-table">
+                <div class="cost-row"><span>Build volume</span><span>256 × 256 × 256 mm</span></div>
+                <div class="cost-row"><span>Max nozzle temp</span><span>350 °C</span></div>
+                <div class="cost-row"><span>Enclosure</span><span>Open frame</span></div>
+                <div class="cost-row"><span>Multicolour</span><span>CANVAS, up to 4 colours</span></div>
+                <div class="cost-row"><span>Recommended filaments</span><span>PLA, PETG, PLA-CF, TPU</span></div>
+                <div class="cost-row"><span>Slicer</span><span>Elegoo Slicer</span></div>
+              </div>
+              <p class="faint" style="font-size:12px; line-height:1.7; margin-top:12px;">
+                Specs are from Elegoo's published figures. ABS, ASA, PC and nylon are not recommended on an open-frame machine, so they aren't in the default filament list. You can still add them in Settings.
+              </p>
+            </div>
+            <div class="card">
+              <div class="section-label" style="margin-bottom:12px;">How this site works with it</div>
+              <ol class="steps">
+                <li>Slice in <strong>Elegoo Slicer</strong> and send the job to the printer (LAN, Elegoo cloud or USB) as you do now.</li>
+                <li>Open the <strong>Calculator</strong> and press <strong>Import G-code</strong>. Weight, print time and the grams for each colour fill in from the file.</li>
+                <li>Check the price, then <strong>Save to history</strong>. Each colour's grams come off its own spool.</li>
+              </ol>
+              <p class="faint" style="font-size:12px; line-height:1.7; margin-top:12px;">
+                There's no live status, camera or file manager for this printer. The stock firmware doesn't expose the Moonraker interface this page uses for live control. Using the Neptune 4 profile in Settings turns the live features back on for a printer that does.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -669,7 +705,13 @@
             <div class="page-title">Files &amp; queue</div>
             <div class="page-desc">G-code on the printer. Upload from here, start a print, or line jobs up in the queue.</div>
           </div>
-          <div class="btn-row" style="margin:0;"><button class="btn btn-sm" id="btn-files-refresh">Refresh</button></div>
+          <div class="btn-row moon-only" style="margin:0;"><button class="btn btn-sm" id="btn-files-refresh">Refresh</button></div>
+        </div>
+
+        <div class="offline-note" id="files-centauri" style="display:none;">
+          <strong>Files are managed on the printer for the Centauri 2 Combo.</strong><br>
+          Send jobs from Elegoo Slicer or by USB. To price a job, use <strong>Import G-code</strong> in the Calculator.
+          <br><button class="btn btn-primary btn-sm" data-goto="calculator">Open Calculator</button>
         </div>
 
         <div class="offline-note" id="files-offline">
@@ -752,6 +794,11 @@
 
         <div class="grid grid-cols-2">
           <div class="card">
+            <div class="import-row">
+              <button class="btn btn-sm btn-primary" id="btn-import-gcode" type="button">Import G-code</button>
+              <input type="file" id="gcode-calc-input" accept=".gcode,.gco,.g,.txt" style="display:none">
+              <div class="hint" id="gcode-status">Sliced in Elegoo Slicer or Orca? Import the .gcode to fill weight, time and per-colour grams.</div>
+            </div>
             <div class="field">
               <label>Print name</label>
               <input type="text" id="in-name" placeholder="e.g. Articulated Dragon">
@@ -764,6 +811,7 @@
               <div class="field"><label>Weight (g)</label><input type="number" id="in-weight" step="0.1" min="0" value="0"></div>
               <div class="field"><label>Extras (£)</label><input type="number" id="in-extras" step="0.01" min="0" value="0"></div>
             </div>
+            <div id="colour-box"></div>
             <div class="field-row">
               <div class="field"><label>Print hours</label><input type="number" id="in-hours" min="0" value="0"></div>
               <div class="field"><label>Minutes</label><input type="number" id="in-minutes" min="0" max="59" value="0"></div>
@@ -866,7 +914,7 @@
               <div class="cost-list">
                 <div class="cost-row"><span>Triangles</span><span id="m-tris">—</span></div>
                 <div class="cost-row"><span>Bounding box (mm)</span><span id="m-bbox">—</span></div>
-                <div class="cost-row"><span>Fits Neptune 4 bed</span><span id="m-fits">—</span></div>
+                <div class="cost-row"><span id="m-fits-label">Fits bed</span><span id="m-fits">—</span></div>
                 <div class="cost-row"><span>Volume</span><span id="m-vol">— cm³</span></div>
                 <div class="cost-row"><span>Est. weight</span><span id="m-weight">— g</span></div>
               </div>
@@ -932,7 +980,7 @@
           <div class="card">
             <div class="section-label">Notes</div>
             <p class="faint" style="font-size:12.5px; line-height:1.7; margin-top:10px;">
-              Print hours come from Moonraker's job history when the printer is connected, and from your logged prints otherwise. Tap <strong style="color:var(--ink)">Done</strong> when you've serviced something and the counter resets from the current hours.
+              Print hours come from your logged prints (and from the printer's own job history when a Moonraker printer is connected). Tap <strong style="color:var(--ink)">Done</strong> when you've serviced something and the counter resets from the current hours.
             </p>
             <div class="field" style="margin-top:16px;">
               <label>Manual hours offset (if the printer's counter was reset)</label>
@@ -954,7 +1002,16 @@
         <div class="grid grid-cols-2">
           <div>
             <div class="card">
-              <div class="section-label" style="margin-bottom:14px;">Printer connection</div>
+              <div class="section-label" style="margin-bottom:14px;">Printer</div>
+              <div class="field">
+                <label>Printer profile</label>
+                <select id="set-profile">
+                  <option value="centauri2">Elegoo Centauri 2 Combo (manual, G-code import)</option>
+                  <option value="neptune4">Elegoo Neptune 4 (live over Moonraker)</option>
+                </select>
+                <div class="hint" id="profile-hint"></div>
+              </div>
+              <div id="moon-fields">
               <div class="field">
                 <label>Moonraker address</label>
                 <input type="text" id="set-host" placeholder="192.168.1.50 or 192.168.1.50:7125">
@@ -987,9 +1044,10 @@
                 <button class="btn btn-ghost" id="btn-test">Test connection</button>
               </div>
               <div class="hint" id="conn-result" style="margin-top:12px; font-size:12px; color:var(--ink-2); line-height:1.6;"></div>
+              </div>
             </div>
 
-            <div class="card" style="margin-top:14px;">
+            <div class="card moon-only" style="margin-top:14px;">
               <div class="section-label" style="margin-bottom:12px;">One-time printer setup</div>
               <ol class="steps">
                 <li>Open Fluidd on the printer (<code>http://&lt;printer-ip&gt;</code>), go to <strong>Configuration</strong> and open <code>moonraker.conf</code>.</li>
@@ -1025,7 +1083,7 @@ cors_domains:
                 <div class="field"><label>Default margin (%)</label><input type="number" id="set-margin" step="1" min="0"></div>
                 <div class="field"><label>Electricity (£ per kWh)</label><input type="number" id="set-kwh" step="0.01" min="0"></div>
               </div>
-              <div class="field"><label>Printer average draw (watts) — Neptune 4 is roughly 120 W while printing PLA</label><input type="number" id="set-watts" step="1" min="0"></div>
+              <div class="field"><label id="set-watts-label">Printer average draw (watts)</label><input type="number" id="set-watts" step="1" min="0"><div class="hint" id="watts-hint"></div></div>
             </div>
             <div class="card" style="margin-top:14px;">
               <div class="section-label" style="margin-bottom:12px;">Filament library</div>
@@ -1124,20 +1182,45 @@ cors_domains:
     { id:5, name:"Clean PEI sheet with IPA", interval:25, last:0 }
   ];
   const TAG_COLORS = ["#4D7CFF","#3FB6DC","#2ECC8B","#F0B429","#FF6A3D","#A78BFA"];
-  const NEPTUNE4_BED = { x:225, y:225, z:265 };
+  const CENTAURI_FILAMENTS = [
+    { name:"PLA",    price:18.00, density:1.24 },
+    { name:"PETG",   price:21.00, density:1.27 },
+    { name:"PLA-CF", price:28.00, density:1.30 },
+    { name:"TPU",    price:26.00, density:1.21 }
+  ];
+  const CENTAURI_MAINT = [
+    { id:1, name:"Clean nozzle & check for clogs", interval:50, last:0 },
+    { id:2, name:"Check CANVAS feed path & PTFE tubes", interval:50, last:0 },
+    { id:3, name:"Lubricate rails & Z axis", interval:100, last:0 },
+    { id:4, name:"Check belt tension", interval:150, last:0 },
+    { id:5, name:"Re-run bed levelling", interval:100, last:0 },
+    { id:6, name:"Clean PEI plate with IPA", interval:25, last:0 }
+  ];
+  const PROFILES = {
+    centauri2: { id:"centauri2", name:"Elegoo Centauri 2 Combo", short:"Centauri 2 Combo", bed:{x:256,y:256,z:256}, live:false, watts:150, filaments:CENTAURI_FILAMENTS, maint:CENTAURI_MAINT,
+      hint:"Manual mode. No live link. Price jobs by importing the G-code from Elegoo Slicer.",
+      wattsHint:"Estimate. Measure with a plug-in power meter for a real figure (CANVAS and a heated bed can push it higher)." },
+    neptune4:  { id:"neptune4", name:"Elegoo Neptune 4", short:"Neptune 4", bed:{x:225,y:225,z:265}, live:true, watts:120, filaments:DEFAULT_FILAMENTS, maint:DEFAULT_MAINT,
+      hint:"Live status, files, camera and controls through Moonraker. Needs the one-time setup below.",
+      wattsHint:"Roughly 120 W while printing PLA." }
+  };
 
   function load(key, fallback){ try{ const raw=localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(e){ return fallback; } }
   function save(key, value){ try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){} }
 
-  let settings   = Object.assign({}, DEFAULT_SETTINGS, load("rprints_settings", {}));
   let printerCfg = Object.assign({}, DEFAULT_PRINTER,  load("rprints_printer", {}));
-  let filaments  = load("rprints_filaments", DEFAULT_FILAMENTS);
+  // existing setups that already have a Moonraker address keep the live profile; new ones start on the Centauri 2 Combo
+  if(!PROFILES[printerCfg.profile]) printerCfg.profile = printerCfg.host ? "neptune4" : "centauri2";
+  const prof = () => PROFILES[printerCfg.profile] || PROFILES.centauri2;
+  let settings   = Object.assign({}, DEFAULT_SETTINGS, { watts:prof().watts }, load("rprints_settings", {}));
+  let filaments  = load("rprints_filaments", prof().filaments);
+  let colourRows = [];
   let history    = load("rprints_history", []);
   let spools     = load("rprints_spools", []);
   let activeSpool= load("rprints_active_spool", null);
   let queue      = load("rprints_queue", []);
   let queueAuto  = load("rprints_queue_auto", false);
-  let maint      = load("rprints_maint", DEFAULT_MAINT);
+  let maint      = load("rprints_maint", prof().maint);
   let maintOffset= load("rprints_maint_offset", 0);
   let seenJobs   = load("rprints_seen_jobs", []);
   let inbox      = load("rprints_inbox", []);
@@ -1163,7 +1246,7 @@ cors_domains:
   $$("[data-goto]").forEach(b=> b.addEventListener("click", ()=> gotoPage(b.dataset.goto)));
   $("#btn-view-history").addEventListener("click", ()=> gotoPage("history"));
   $("#dash-printer-card").addEventListener("click", ()=> gotoPage("printer"));
-  $("#conn-badge").addEventListener("click", ()=> gotoPage(printerCfg.host ? "printer" : "settings"));
+  $("#conn-badge").addEventListener("click", ()=> gotoPage(!prof().live || printerCfg.host ? "printer" : "settings"));
   function gotoPage(id){
     $$(".rail-btn").forEach(n=>n.classList.toggle("active", n.dataset.page===id));
     $$(".page").forEach(p=>p.classList.toggle("active", p.id==="page-"+id));
@@ -1221,7 +1304,16 @@ cors_domains:
   const post = (path, body) => api(path, { method:"POST", body: body?JSON.stringify(body):undefined, headers: body?{"Content-Type":"application/json"}:{} });
   const sendGcode = script => post("/printer/gcode/script?script="+encodeURIComponent(script));
 
+  function applyManualState(){
+    printer.state="offline"; printer.online=false;
+    $("#conn-dot").className="dot"; $("#rail-foot").className="rail-foot";
+    $("#conn-text").textContent=prof().short+" · manual";
+    $("#dash-printer-state").textContent="Manual";
+    $("#dash-printer-sub").textContent="Import G-code in Calculator";
+    $("#dash-printer-bar").style.width="0%";
+  }
   function setConn(state, text){
+    if(!prof().live){ applyManualState(); return; }
     printer.state=state;
     const dot=$("#conn-dot"); dot.className="dot "+(state==="offline"?"":state);
     $("#conn-text").textContent=text;
@@ -1241,6 +1333,7 @@ cors_domains:
 
   async function connect(){
     stopPolling();
+    if(!prof().live) return;
     if(!baseUrl()){ setConn("offline","Printer not set up"); return; }
     setConn("offline","Connecting…");
     try{
@@ -1702,7 +1795,7 @@ cors_domains:
     });
     $(".e-cancel",card).addEventListener("click", renderSpools);
   }
-  function persistSpools(){ save("rprints_spools", spools); renderSpools(); renderSpoolSelect(); }
+  function persistSpools(){ save("rprints_spools", spools); renderSpools(); renderSpoolSelect(); renderColours(); }
 
   /* =====================================================================
      Calculator
@@ -1737,15 +1830,19 @@ cors_domains:
   $("#chip-round").addEventListener("click", ()=>{ const v=parseFloat(inSell.value)||currentCalc().totalCost; inSell.value=(Math.ceil(v)-0.01).toFixed(2); recalc(); });
   $("#btn-reset").addEventListener("click", ()=>{
     inName.value=""; inCustomer.value=""; inWeight.value=0; inExtras.value=0; inHours.value=0; inMinutes.value=0; inSell.value=0;
-    $("#in-filament").selectedIndex=0; inPrice.value=filaments[0].price; recalc();
+    $("#in-filament").selectedIndex=0; inPrice.value=filaments[0].price; colourRows=[]; renderColours();
+    $("#gcode-status").textContent=GCODE_HINT; recalc();
   });
   $("#btn-save").addEventListener("click", ()=>{
     const c=currentCalc(), f=selectedFilament($("#in-filament"));
     history.unshift({ id:Date.now(), name:inName.value.trim()||"Untitled print", customer:inCustomer.value.trim(), date:new Date().toISOString().slice(0,10),
-      filament:f.name, weight:c.weight, hours:c.hours, minutes:c.minutes, cost:c.totalCost, sell:c.sell, profit:c.profit, margin:c.margin });
+      filament:colourRows.length>1 ? f.name+" · "+colourRows.length+" colours" : f.name, weight:c.weight, hours:c.hours, minutes:c.minutes, cost:c.totalCost, sell:c.sell, profit:c.profit, margin:c.margin });
     save("rprints_history", history);
     const sp=spools.find(s=>String(s.id)===$("#in-spool").value);
-    if(sp && c.weight>0){ sp.remaining-=c.weight; persistSpools(); if(sp.remaining<sp.initial*0.15) toast(`Saved — ${sp.name} is running low (${Math.max(0,sp.remaining).toFixed(0)} g)`); else toast("Saved to history"); }
+    if(colourRows.length>1){
+      const low=[]; colourRows.forEach(r=>{ const s=spools.find(x=>String(x.id)===String(r.spool)); if(s&&r.g>0){ s.remaining-=r.g; if(s.remaining<s.initial*0.15) low.push(s.name); } });
+      persistSpools(); toast(low.length?("Saved — running low: "+low.join(", ")):"Saved to history");
+    } else if(sp && c.weight>0){ sp.remaining-=c.weight; persistSpools(); if(sp.remaining<sp.initial*0.15) toast(`Saved — ${sp.name} is running low (${Math.max(0,sp.remaining).toFixed(0)} g)`); else toast("Saved to history"); }
     else toast("Saved to history");
     renderHistory(); renderDashboard();
   });
@@ -1871,6 +1968,7 @@ cors_domains:
     $("#set-kwh").value=settings.kwh; $("#set-watts").value=settings.watts;
     $("#set-host").value=printerCfg.host; $("#set-apikey").value=printerCfg.apiKey; $("#set-cam").value=printerCfg.cam;
     $("#set-diameter").value=printerCfg.diameter; $("#set-autoledger").checked=printerCfg.autoLedger; $("#set-notify").checked=printerCfg.notify;
+    $("#set-profile").value=printerCfg.profile; applyProfileUI();
     renderFilamentGrid();
   }
   ["set-hourrate","set-basefee","set-margin","set-kwh","set-watts"].forEach(id=>$("#"+id).addEventListener("input", ()=>{
@@ -1900,6 +1998,85 @@ cors_domains:
       else out.textContent="Couldn't connect ("+e.message+"). If the printer is definitely reachable, the most likely cause is cors_domains — follow the one-time setup below and restart Moonraker.";
     }
   });
+
+  /* =====================================================================
+     Printer profile
+     ===================================================================== */
+  function applyProfileUI(){
+    const P=prof(), live=P.live;
+    $$(".moon-only").forEach(el=>el.style.display=live?"":"none");
+    $("#moon-fields").style.display=live?"":"none";
+    $("#printer-centauri").style.display=live?"none":"block";
+    $("#files-centauri").style.display=live?"none":"block";
+    if(!live){ $("#printer-offline").style.display="none"; $("#printer-live").style.display="none"; $("#files-offline").style.display="none"; $("#files-live").style.display="none"; }
+    const pm=$("#printer-mode"); pm.style.display=live?"none":"inline-block";
+    $("#printer-desc").textContent=live?"Live status from your "+P.short+".":P.name+" · no live link, price jobs by importing G-code.";
+    $("#dash-desc").textContent=live?"What the printer's doing right now, and everything priced and logged.":"Everything priced and logged for the "+P.short+".";
+    $("#m-fits-label").textContent="Fits "+P.short+" bed ("+P.bed.x+"×"+P.bed.y+"×"+P.bed.z+")";
+    $("#profile-hint").textContent=P.hint; $("#watts-hint").textContent=P.wattsHint;
+    if(!live) applyManualState();
+  }
+  $("#set-profile").addEventListener("change", e=>{
+    const old=prof(), next=PROFILES[e.target.value]; if(!next||next===old) return;
+    const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+    printerCfg.profile=next.id; save("rprints_printer", printerCfg);
+    // only swap in the new profile's defaults if the current ones are still untouched
+    if(same(filaments,old.filaments)){ filaments=JSON.parse(JSON.stringify(next.filaments)); save("rprints_filaments",filaments); }
+    if(same(maint,old.maint)){ maint=JSON.parse(JSON.stringify(next.maint)); save("rprints_maint",maint); }
+    if(settings.watts===old.watts){ settings.watts=next.watts; save("rprints_settings",settings); }
+    stopPolling(); renderFilamentSelects(); renderSettings(); renderMaintenance(); recalc();
+    if(next.live){ setConn("offline", printerCfg.host?"Connecting…":"Printer not set up"); if(printerCfg.host) connect(); }
+    toast("Switched to "+next.name);
+  });
+
+  /* =====================================================================
+     G-code import (Elegoo Slicer / Orca / PrusaSlicer style headers)
+     ===================================================================== */
+  const GCODE_HINT="Sliced in Elegoo Slicer or Orca? Import the .gcode to fill weight, time and per-colour grams.";
+  function parseGcodeInfo(text){
+    const out={ grams:[], wipe:0, seconds:0 };
+    let m=text.match(/;\s*(?:total\s+)?filament used \[g\]\s*[=:]\s*([\d.,\s]+)/i);
+    if(m) out.grams=m[1].split(",").map(x=>parseFloat(x)).filter(x=>isFinite(x));
+    if(!out.grams.length){ m=text.match(/;\s*total filament weight \[g\]\s*[=:]\s*([\d.,\s]+)/i); if(m) out.grams=m[1].split(",").map(x=>parseFloat(x)).filter(x=>isFinite(x)); }
+    m=text.match(/;\s*total filament used for wipe tower \[g\]\s*[=:]\s*([\d.]+)/i); if(m) out.wipe=parseFloat(m[1])||0;
+    m=text.match(/;\s*(?:total\s+)?estimated (?:printing )?time[^=:\r\n]*[=:]\s*([^\r\n]+)/i);
+    if(m){ const t=m[1]; const g=(re)=>{ const x=t.match(re); return x?parseInt(x[1],10):0; };
+      out.seconds=g(/(\d+)\s*d/)*86400+g(/(\d+)\s*h/)*3600+g(/(\d+)\s*m(?!s)/)*60+g(/(\d+)\s*s/); }
+    out.found = out.grams.length>0 || out.seconds>0;
+    return out;
+  }
+  $("#btn-import-gcode").addEventListener("click", ()=>$("#gcode-calc-input").click());
+  $("#gcode-calc-input").addEventListener("change", async e=>{
+    const file=e.target.files[0]; e.target.value=""; if(!file) return;
+    try{
+      const CH=400000;
+      const head=await file.slice(0,CH).text();
+      const tail=file.size>CH ? await file.slice(Math.max(CH,file.size-CH)).text() : "";
+      const info=parseGcodeInfo(head+"\n"+tail);
+      if(!info.found){ toast("No filament or time info found in that file", true); $("#gcode-status").textContent="Couldn't read weight or time from "+file.name+". Is it a sliced .gcode (not a .3mf or .stl)?"; return; }
+      if(!inName.value.trim()) inName.value=file.name.replace(/\.(gcode|gco|g|txt)$/i,"");
+      const total=info.grams.reduce((a,b)=>a+b,0);
+      if(info.grams.length>1) colourRows=info.grams.map((g,i)=>({ g, spool:(i===0&&$("#in-spool").value)?$("#in-spool").value:"" })); else colourRows=[];
+      if(total>0) inWeight.value=total.toFixed(1);
+      if(info.seconds>0){ let h=Math.floor(info.seconds/3600), mi=Math.round((info.seconds%3600)/60); if(mi===60){h++;mi=0;} inHours.value=h; inMinutes.value=mi; }
+      renderColours(); recalc();
+      const bits=[]; if(info.grams.length>1) bits.push(info.grams.length+" colours"); if(total>0) bits.push(total.toFixed(1)+" g"+(info.wipe>0?" (includes about "+info.wipe.toFixed(1)+" g wipe tower)":""));
+      if(info.seconds>0) bits.push(fmtDur(info.seconds).replace(/\s\d+s$/,""));
+      $("#gcode-status").textContent="Imported from "+file.name+": "+bits.join(" · ")+". Check the figures against your slicer.";
+      toast("G-code imported");
+    }catch(err){ console.error(err); toast("Couldn't read that file", true); }
+  });
+  function renderColours(){
+    const box=$("#colour-box");
+    if(colourRows.length<2){ box.style.display="none"; box.innerHTML=""; return; }
+    const opts=r=>`<option value="">Don't track</option>`+spools.map(s=>`<option value="${s.id}" ${String(s.id)===String(r.spool)?"selected":""}>${escapeHtml(s.name)} — ${Math.max(0,s.remaining).toFixed(0)} g left</option>`).join("");
+    box.style.display="block";
+    box.innerHTML=`<div class="section-label" style="margin:2px 0 10px;">${colourRows.length} colours — grams and spool for each</div>`+colourRows.map((r,i)=>`
+      <div class="field-row"><div class="field"><label>Colour ${i+1} (g)</label><input type="number" class="col-g" data-i="${i}" step="0.1" min="0" value="${r.g}"></div>
+      <div class="field"><label>Spool</label><select class="col-sp" data-i="${i}">${opts(r)}</select></div></div>`).join("");
+    $$(".col-g",box).forEach(el=>el.addEventListener("input", ()=>{ colourRows[+el.dataset.i].g=parseFloat(el.value)||0; inWeight.value=colourRows.reduce((a,r)=>a+r.g,0).toFixed(1); recalc(); }));
+    $$(".col-sp",box).forEach(el=>el.addEventListener("change", ()=>{ colourRows[+el.dataset.i].spool=el.value; }));
+  }
 
   function renderFilamentGrid(){
     const grid=$("#filament-grid");
@@ -1955,7 +2132,7 @@ cors_domains:
         $("#m-tris").textContent=result.triCount.toLocaleString();
         $("#m-bbox").textContent=`${result.bbox.x.toFixed(1)} × ${result.bbox.y.toFixed(1)} × ${result.bbox.z.toFixed(1)}`;
         const dims=[result.bbox.x,result.bbox.y,result.bbox.z];
-        const fits = dims[2]<=NEPTUNE4_BED.z && Math.max(dims[0],dims[1])<=NEPTUNE4_BED.x && Math.min(dims[0],dims[1])<=NEPTUNE4_BED.y;
+        const bed=prof().bed; const fits = dims[2]<=bed.z && Math.max(dims[0],dims[1])<=Math.max(bed.x,bed.y) && Math.min(dims[0],dims[1])<=Math.min(bed.x,bed.y);
         const el=$("#m-fits"); el.textContent=fits?"Yes":"Too big"; el.style.color=fits?"var(--accent)":"var(--heat)";
         $("#m-vol").textContent=result.volumeCm3.toFixed(2)+" cm³";
         updateWeightEstimate(); $("#btn-send-calc").disabled=false; loadMeshIntoViewer(result);
@@ -2048,9 +2225,10 @@ cors_domains:
   function init(){
     renderFilamentSelects(); inPrice.value=filaments[0].price;
     renderDashboard(); renderHistory(); renderSettings(); renderSpools(); renderQueue(); renderMaintenance(); renderInbox(); recalc();
+    applyProfileUI();
     setConn("offline", printerCfg.host?"Connecting…":"Printer not set up");
-    if(printerCfg.host) connect();
-    if(location.protocol==="https:" && printerCfg.host) toast("Heads up: https pages can't reach a local printer — open this file locally instead", true);
+    if(prof().live && printerCfg.host) connect();
+    if(prof().live && location.protocol==="https:" && printerCfg.host) toast("Heads up: https pages can't reach a local printer — open this file locally instead", true);
   }
   init();
 })();
